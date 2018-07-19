@@ -54,6 +54,7 @@ ITEM_PIPELINES = {
 
 
 IMAGES_STORE = 's3://dw-temp/Images/'
+IMAGES_STORE = 's3://dw-temp/WeiboImages/'
 IMAGES_EXPIRES = 1
 IMAGES_STORE_S3_ACL = 'public-read'
 AWS_ACCESS_KEY_ID = 'AKIAPF5JUFSZ6Q4HXMCA'

@@ -5,28 +5,6 @@
 from scrapy.item import Item, Field
 
 
-
-class NewsItem(Item):
-    """类说明
-    图文资讯
-    """
-    pubaccount_id = Field()
-    title = Field()
-    subtitle = Field()
-    origin = Field()
-    image = Field()
-    orig_url = Field()
-    content = Field()
-    publish_tm = Field()
-    ref_id = Field()
-
-    tags = Field()
-    author = Field()
-    author_name = Field()
-    column_content = Field()
-
-
-
 class TweetItem(Item):
     """动态内容"""
     url = Field()

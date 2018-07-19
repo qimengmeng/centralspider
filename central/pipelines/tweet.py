@@ -12,10 +12,6 @@ from central.items.basis import (
     TweetItem, TweetImageItem,
 )
 
-from central.pipelines.images_pipeline import (
-    MyImagesPipeline,
-)
-
 
 class TweetPipeline(object):
 
