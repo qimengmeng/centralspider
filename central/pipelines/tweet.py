@@ -73,8 +73,8 @@ class TweetPipeline(object):
 
         # 重新封装
         params = {
-            'url': item['url'],
-            'publish_time': datetime.datetime.strptime(item['publish'], "%Y-%m-%d %H:%M:%S").strftime(
+            'url': item_dic.get('url'),
+            'publish_time': datetime.datetime.strptime(item_dic.get('publish'), "%Y-%m-%d %H:%M:%S").strftime(
                 "%Y-%m-%dT%H:%M:%S.000Z"),
 
             'news_type': item_dic["operation"]['news_type'],
@@ -83,18 +83,18 @@ class TweetPipeline(object):
             'lang':  item_dic["operation"]['lang'],
 
             'share_url': '',
-            'publish_source': item_dic['site'],
+            'publish_source': item_dic.get('website'),
             'publish_account': '',
-            'content': item_dic['content'],
+            'content': item_dic.get('content'),
             'top_image': '',
             's3_image': '',
             'thumb_image': '',
             'profile_image': '',
             'tag_output': '',
         }
-        if len(item['image_urls']) > 0:
+        if len(item_dic.get('image_urls')) > 0:
             params['top_image'] = item['image_urls'][0]
-        if len(item['images']) > 0:
+        if item_dic.get('images') and len(item_dic.get("images")) > 0:
             params['s3_image'] = config.get('IMAGE', 'PREFIX') + item['images'][0]['path']
             # params['thumb_image'] = config.get('IMAGE', 'PREFIX') + 'thumbs/%s/%s.jpg' % (request.meta['path'], thumb_guid)
 
@@ -105,6 +105,6 @@ class TweetPipeline(object):
             producer.send('news_streaming', str(message))
             producer.flush()
         except KafkaError as e:
-            print e
+            logging.info(e)
 
 

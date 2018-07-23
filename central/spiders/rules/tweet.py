@@ -127,13 +127,13 @@ class WeiboTweetRule(object):
         publish_time = str_time.split(u'来自')[0]
         if u"刚刚" in publish_time:
             publish_time = datetime.now().strftime(
-                '%Y-%m-%d %H:%M')
+                '%Y-%m-%d %H:%M:%S')
         elif u"分钟" in publish_time:
             minute = publish_time[:publish_time.find(u"分钟")]
             minute = timedelta(minutes=int(minute))
             publish_time = (
                 datetime.now() - minute).strftime(
-                "%Y-%m-%d %H:%M")
+                "%Y-%m-%d %H:%M:%S")
         elif u"今天" in publish_time:
             today = datetime.now().strftime("%Y-%m-%d")
             time = publish_time[3:]
