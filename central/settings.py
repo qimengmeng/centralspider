@@ -32,6 +32,11 @@ DOWNLOADER_MIDDLEWARES = {
     "central.middlewares.download.proixes.ProxyMiddleware": 545,
 }
 
+SPIDER_MIDDLEWARES = {
+
+            "central.middlewares.spider.imagesave.ImageDownloader": 644,
+        }
+
 EXTENSIONS = {
     'scrapy.telnet.TelnetConsole': None,
     'central.extensions.baseconfig.Baseconfig': 499,
@@ -46,7 +51,7 @@ RETRY_TIMES = 5  # initial response + 5 retries = 6 requests
 # RETRY_HTTP_CODES = [500, 502, 503, 504, 408, 429]
 
 ITEM_PIPELINES = {
-      "central.pipelines.images_pipeline.MyImagesPipeline": 600,
+      # "central.pipelines.images_pipeline.MyImagesPipeline": 600,
       "central.pipelines.socialmedia.SocialmediaPipeline": 601,
       "central.pipelines.tweet.TweetPipeline": 602,
 }

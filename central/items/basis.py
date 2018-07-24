@@ -24,7 +24,7 @@ class TweetItem(Item):
     # 2. 可以为空
     image_urls = Field()
     images = Field()
-    image_paths = Field()
+    image_path_prefix = Field()
 
     ###########
 

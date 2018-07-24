@@ -94,9 +94,10 @@ class TweetPipeline(object):
         }
         if len(item_dic.get('image_urls')) > 0:
             params['top_image'] = item['image_urls'][0]
-        if item_dic.get('images') and len(item_dic.get("images")) > 0:
-            params['s3_image'] = config.get('IMAGE', 'PREFIX') + item['images'][0]['path']
-            # params['thumb_image'] = config.get('IMAGE', 'PREFIX') + 'thumbs/%s/%s.jpg' % (request.meta['path'], thumb_guid)
+
+        if len(item_dic.get("images")) > 0:
+            params['s3_image'] = item['images'][0]['image']
+            params['thumb_image'] = item["images"][0]["thumbnail"]
 
         # 转化为json
         message = json.dumps(params).encode('utf-8')

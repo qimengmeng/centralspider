@@ -188,6 +188,7 @@ class WeiboTweetRule(object):
             "operation": self.operation,
             "image_urls": image_urls,
             "account": self.account,
+            "image_path_base": "WeiboImages/%s" % self.account.weibo_id,
 
         }
 
