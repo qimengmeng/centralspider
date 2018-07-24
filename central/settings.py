@@ -43,18 +43,17 @@ EXTENSIONS = {
 
 # RETRY
 RETRY_TIMES = 5  # initial response + 5 retries = 6 requests
-RETRY_HTTP_CODES = [500, 502, 503, 504, 408, 429]
+# RETRY_HTTP_CODES = [500, 502, 503, 504, 408, 429]
 
 ITEM_PIPELINES = {
-      # "central.pipelines.images_pipeline.MyImagesPipeline": 600,
+      "central.pipelines.images_pipeline.MyImagesPipeline": 600,
       "central.pipelines.socialmedia.SocialmediaPipeline": 601,
       "central.pipelines.tweet.TweetPipeline": 602,
 }
 
 
 
-# IMAGES_STORE = 's3://dw-temp/Images/'
-IMAGES_STORE = 's3://dw-temp/WeiboImages/'
+IMAGES_STORE = 's3://dw-temp/'
 IMAGES_EXPIRES = 1
 IMAGES_STORE_S3_ACL = 'public-read'
 AWS_ACCESS_KEY_ID = 'AKIAPF5JUFSZ6Q4HXMCA'

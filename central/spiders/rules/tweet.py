@@ -124,7 +124,7 @@ class WeiboTweetRule(object):
         str_time = str_time[0].xpath("string(.)").encode(
             sys.stdout.encoding, "ignore").decode(
             sys.stdout.encoding)
-        publish_time = str_time.split(u'来自')[0]
+        publish_time = str_time.split(u'来自')[0].strip()
         if u"刚刚" in publish_time:
             publish_time = datetime.now().strftime(
                 '%Y-%m-%d %H:%M:%S')
@@ -136,17 +136,17 @@ class WeiboTweetRule(object):
                 "%Y-%m-%d %H:%M:%S")
         elif u"今天" in publish_time:
             today = datetime.now().strftime("%Y-%m-%d")
-            time = publish_time[3:]
-            publish_time = today + " " + time
+            time = publish_time[3:].strip()
+            publish_time = today + " " + time + ":00"
         elif u"月" in publish_time:
             year = datetime.now().strftime("%Y")
             month = publish_time[0:2]
             day = publish_time[3:5]
-            time = publish_time[7:12]
+            time = publish_time[7:12].strip()+":00"
             publish_time = (
                 year + "-" + month + "-" + day + " " + time)
         else:
-            publish_time = publish_time[:16]
+            publish_time = publish_time[:16].strip() + ":00"
 
 
         str_footer = feed.xpath("div")[-1]
@@ -154,6 +154,11 @@ class WeiboTweetRule(object):
         image_urls = []
         if str(str_footer.xpath("a[2]/text()")[0]).strip() == u"原图":
             top_image_url = str_footer.xpath("a[2]/@href")[0]
+            image_base = "http://wx2.sinaimg.cn/large/{}.jpg"
+            image_pattern = r"u=(.*)"
+            r = re.search(image_pattern, top_image_url)
+            r = r.group(1)
+            top_image_url = image_base.format(r)
             image_urls.append(top_image_url)
         pattern = r"\d+\.?\d*"
         str_footer = str_footer.xpath("string(.)").encode(
@@ -182,6 +187,7 @@ class WeiboTweetRule(object):
             "comment_num": comment_num,
             "operation": self.operation,
             "image_urls": image_urls,
+            "account": self.account,
 
         }
 

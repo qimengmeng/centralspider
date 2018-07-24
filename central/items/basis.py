@@ -16,6 +16,7 @@ class TweetItem(Item):
     retweet_num = Field()
     comment_num = Field()
     operation = Field()
+    account = Field()
 
     ###########
     # 头图

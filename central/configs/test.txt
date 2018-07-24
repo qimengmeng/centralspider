@@ -16,7 +16,7 @@ URL = logtest:9200
 USER = elastic
 PASSWORD = changeme
 [IMAGE]
-PREFIX = https://dw-temp.s3.cn-north-1.amazonaws.com.cn/Images/
+PREFIX = https://dw-temp.s3.cn-north-1.amazonaws.com.cn/
 [TAG]
 URL = http://master:5301/basic/tagging
 [TRANSLATE]

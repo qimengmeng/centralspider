@@ -2,13 +2,14 @@
 import base64
 
 
-PROXY_DOMAIN = ['toutiao', 'sina', 'qiuduoduo']
+PROXY_DOMAIN = ['sina']
 
 # 代理服务器
 PROXYSERVER = "http://proxy.abuyun.com:9010"
 # 代理隧道验证信息
 PROXYUSER = "HR96J33U70UM8QID"
 PROXYPASS = "3AF353FB2568CC67"
+
 
 
 PROXYAUTH = "Basic " + base64.b64encode(PROXYUSER + ":" + PROXYPASS)
