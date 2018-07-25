@@ -1,8 +1,7 @@
 # -*- coding:utf-8 -*-
 
-import json
 
-from scrapy import Request, FormRequest
+import requests
 
 from central.items.basis import (
                     TweetItem,
@@ -19,44 +18,40 @@ class ImageDownloader(object):
             if not isinstance(r, (TweetItem, )):
                 yield r
 
-            image_urls = r["image_urls"]
+            else:
+                image_urls = r["image_urls"]
 
-            if len(image_urls) == 0:
-                yield r
+                if len(image_urls) == 0:
+                    yield r
+
+                else:
+
+                    top_image_url = image_urls[0]
+
+                    config = spider.config
+
+                    upload_url = config.get("IMAGE", "UPLOAD_URL")
+
+                    formdata = {
+                                   "image_source_url": top_image_url,
+                                   "image_destination": r["image_path_base"],
+                                   "thumbnail": "true",
+                                   "blur": "false",
+                               }
+                    rep = requests.post(url=upload_url, data=formdata).json()
+
+                    rep = eval(rep)
+                    status_code = rep.get("status")
+                    if int(status_code) == 200:
+                        r["images"].append(rep.get("paths"))
+
+                    yield r
 
 
-            top_image_url = image_urls[0]
 
-            config = spider.config
 
-            upload_url = config.get("IMAGE", "UPLOAD_URL")
 
-            yield FormRequest(
-                url=upload_url,
-                callback=self.parse_image,
-                method='post',
-                params={
-                    "image_source_url": top_image_url,
-                    "image_destination": r["image_path_base"],
-                    "thumbnail": "true",
-                    "blur": "true",
-                    },
-                meta={
-                    "item": r,
-                   }
-                )
 
-    def parse_image(self, response):
-
-        item = response.meta.get("item")
-
-        rep = json.loads(response.body)
-
-        item["images"] = []
-        if int(rep.get("status")) == 200:
-            item["images"].append(rep.get("paths"))
-
-        yield item
 
 
 

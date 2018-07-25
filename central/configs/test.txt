@@ -17,7 +17,7 @@ USER = elastic
 PASSWORD = changeme
 [IMAGE]
 PREFIX = https://dw-temp.s3.cn-north-1.amazonaws.com.cn/
-UPLOAD_URL = ...
+UPLOAD_URL = http://54.222.222.42:7771/basic/downloadByUrl
 [TAG]
 URL = http://master:5301/basic/tagging
 [TRANSLATE]
