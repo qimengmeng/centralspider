@@ -105,8 +105,8 @@ class WeiboTweetRule(object):
         weibo_id = feed.xpath("@id")[0][2:]
 
         # 查重开启并且确认重复
-        # if self.spider.download_filter.check_and_update(weibo_id):
-        #     return
+        if self.spider.download_filter.check_and_update(weibo_id):
+            return
 
         a_link = feed.xpath(
             "div/span[@class='ctt']/a/@href")
