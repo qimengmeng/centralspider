@@ -37,3 +37,13 @@ class TweetImageItem(Item):
     priority = Field()
     is_gif = Field()
 
+
+class TweetHotsearchItem(Item):
+
+    """微博热搜"""
+    order_number = Field()
+    keyword = Field()
+    hot_degree = Field()
+    hottime = Field()
+
+

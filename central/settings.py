@@ -51,23 +51,13 @@ RETRY_TIMES = 5  # initial response + 5 retries = 6 requests
 # RETRY_HTTP_CODES = [500, 502, 503, 504, 408, 429]
 
 ITEM_PIPELINES = {
-      # "central.pipelines.images_pipeline.MyImagesPipeline": 600,
       "central.pipelines.socialmedia.SocialmediaPipeline": 601,
       "central.pipelines.tweet.TweetPipeline": 602,
+      "central.pipelines.hotsearch.HotsearchPipeline": 603,
 }
 
 
 
-IMAGES_STORE = 's3://dw-temp/'
-IMAGES_EXPIRES = 1
-IMAGES_STORE_S3_ACL = 'public-read'
-AWS_ACCESS_KEY_ID = 'AKIAPF5JUFSZ6Q4HXMCA'
-AWS_SECRET_ACCESS_KEY = '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'
-
-# 图片缩略图
-IMAGES_THUMBS = {
-	'thumbs': (200, 999999),
-}
 
 #"development,test,production"
 ENV_MODE = "test"

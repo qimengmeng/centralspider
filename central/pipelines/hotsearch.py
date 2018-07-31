@@ -1,7 +1,8 @@
-# -*- coding: utf-8 -*-
+# -*- coding:utf-8 -*-
+
+
 import logging
 import json
-import datetime
 
 from scrapy.exceptions import (
     DropItem,
@@ -9,17 +10,17 @@ from scrapy.exceptions import (
 from kafka.errors import KafkaError
 
 from central.items.basis import (
-    TweetItem, TweetImageItem,
+    TweetHotsearchItem,
 )
 
 
-class TweetPipeline(object):
+class HotsearchPipeline(object):
 
-    collection_name = "tweet_"
-    accept_spiders = ('central_tweet', )
-    accept_items = (TweetItem, TweetImageItem)
+    collection_name = "hotsearch_"
+    accept_spiders = ('central_hotsearch', )
+    accept_items = (TweetHotsearchItem,)
     necessary_keys = {
-        'publish', 'content'
+        "keyword", "hot_degree", "hottime", "order_number"
     }
 
     def __init__(self, ):
@@ -73,35 +74,19 @@ class TweetPipeline(object):
 
         # 重新封装
         params = {
-            'url': item_dic.get('url'),
-            'publish_time': datetime.datetime.strptime(item_dic.get('publish'), "%Y-%m-%d %H:%M:%S").strftime(
-                "%Y-%m-%dT%H:%M:%S.000Z"),
-            "weibo_id": item_dic.get("weibo_id"),
-            "up_num": item_dic.get("up_num"),
-            "retweet_num": item_dic.get("retweet_num"),
-            "comment_num": item_dic.get("comment_num"),
+            'url': item_dic.get('link'),
+            'hottime': item_dic.get("hottime"),
+
+            "keyword": item_dic.get("keyword"),
+            "hot_degree": item_dic.get("hot_degree"),
+            "order_number": item_dic.get("order_number"),
 
             'news_type': item_dic["operation"]['news_type'],
             'category': item_dic["operation"]['category'],
             'country':  item_dic["operation"]['country'],
             'lang':  item_dic["operation"]['lang'],
 
-            'share_url': '',
-            'publish_source': item_dic.get('website'),
-            'publish_account': '',
-            'content': item_dic.get('content'),
-            'top_image': '',
-            's3_image': '',
-            'thumb_image': '',
-            'profile_image': '',
-            'tag_output': '',
         }
-        if len(item_dic.get('image_urls')) > 0:
-            params['top_image'] = item['image_urls'][0]
-
-        if len(item_dic.get("images")) > 0:
-            params['s3_image'] = item['images'][0]['image']
-            params['thumb_image'] = item["images"][0]["thumbnail"]
 
         # 转化为json
         message = json.dumps(params).encode('utf-8')
@@ -111,5 +96,3 @@ class TweetPipeline(object):
             producer.flush()
         except KafkaError as e:
             logging.info(e)
-
-

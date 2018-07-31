@@ -54,3 +54,26 @@ TWEET = [
                     }
     },
 ]
+
+
+HOTSEARCH = [
+    # ---文字类型---
+    #微博热搜
+
+    {
+        "name": 'weibo_hotsearch',
+        "site": 'weibo',
+        "urls": [
+            "http://s.weibo.com/top/summary?cate=realtimehot",
+        ],
+        "allowed_domains": ["weibo.com", ],
+
+        "operation": {
+                'lang': 0,
+                'news_type': 2,
+                'category': 0,
+                'country': 0,
+                'url_source': 'https://weibo.com/'
+                    }
+    },
+]

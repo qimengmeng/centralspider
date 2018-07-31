@@ -24,7 +24,6 @@ class WeiboAccountRule(object):
         self.site = kwargs.get('site')
         self.home_page_url = "https://www.weibo.com/{}".format(
                                                         self.account.weibo_id)
-        # self.home_page_url = "https://www.weibo.com/{}".format(u'u/300124151')
         self.date_time = (datetime.datetime.now() - datetime.timedelta(days=7)).strftime("%Y-%m-%d %H:%M:%S")
 
     def err_report(self, failure):
