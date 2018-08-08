@@ -4,6 +4,9 @@ import logging
 from scrapy.exceptions import (
     DropItem,
 )
+from elasticsearch import (
+    Elasticsearch,ElasticsearchException,helpers
+)
 
 from central.models import (
     SocialMedia,
@@ -16,7 +19,7 @@ from central.items.crawlmanage import (
 
 class SocialmediaPipeline(object):
 
-    collection_name = "socialmeida_"
+    collection_name = "socialmeida"
     accept_spiders = ('central_socialmedia', )
     accept_items = (SMAccountItem, )
     necessary_keys = {
@@ -63,6 +66,7 @@ class SocialmediaPipeline(object):
         config = spider.config
         producer = spider.producer
         mslogger = spider.mslogger
+        self.es_client = spider.es_client
 
         if not self.is_acceptable(item, spider):
             return item
@@ -76,13 +80,13 @@ class SocialmediaPipeline(object):
         socialmeida = item_dic.get('account')
         update_dic = {
             'site': socialmeida.site,
-            'weibo_id': socialmeida.weibo_id,
-            'ref_id': item_dic.get("ref_id"),
+            'weibo_id': item_dic.get("weibo_id"),
             'weibo_name': item_dic.get('weibo_name'),
             'weibo_followers': item_dic.get('weibo_followers'),
             'weibo_tweets': item_dic.get('weibo_tweets'),
             'weibo_following': item_dic.get('weibo_following'),
             'weibo_brief': item_dic.get('weibo_brief'),
+            'weibo_photo': item_dic.get('weibo_photo'),
         }
 
         for k, v in update_dic.iteritems():
@@ -94,3 +98,72 @@ class SocialmediaPipeline(object):
         except Exception as e:
             logging.info(e)
             db_session.rollback()
+
+        self.save_to_es(socialmeida)
+
+
+    def save_to_es(self, socialmedia):
+
+        response = self.es_client.search(
+            index="socialmedia",
+            body={
+                "query": {
+                    "term": {
+                        "account_id": socialmedia.ref_id,
+                        }
+                     },
+                "_source": ["account_id"]
+                },
+            )
+
+        total = response["hits"]["total"]
+
+        if total == 0:
+            body = {
+                  "site": socialmedia.site,
+                  "account_id": socialmedia.ref_id,
+                  "account_domain": socialmedia.weibo_id,
+                  "weibo_name": socialmedia.weibo_name,
+                  "weibo_photo": socialmedia.weibo_photo,
+                  "weibo_tweets": socialmedia.weibo_tweets,
+                  "weibo_followers": socialmedia.weibo_followers,
+                  "weibo_following": socialmedia.weibo_following,
+                  "weibo_brief": socialmedia.weibo_brief
+                    }
+
+            res = self.es_client.index(
+                        index='socialmedia',
+                        doc_type='socialmedia',
+                        body=body,
+                        id=None
+                    )
+            logging.debug(res["created"])
+
+        elif total == 1:
+            # body = {
+            #     "weibo_tweets": socialmedia.weibo_tweets,
+            #     "weibo_followers": socialmedia.weibo_followers,
+            #     "weibo_following": socialmedia.weibo_following,
+            # }
+            res = self.es_client.update(
+                        index='indexName',
+                        doc_type='typeName',
+                        id=socialmedia.ref_id,
+                        body={
+                              "weibo_tweets": socialmedia.weibo_tweets,
+                              "weibo_followers": socialmedia.weibo_followers,
+                              "weibo_following": socialmedia.weibo_following,
+                              }
+                          )
+
+            logging.debug(res["created"])
+
+        else:
+            raise
+
+        logging.info("-----------")
+
+
+
+
+

@@ -22,8 +22,8 @@ class WeiboAccountRule(object):
     def __init__(self, **kwargs):
         self.account = kwargs.get('account')
         self.site = kwargs.get('site')
-        self.home_page_url = "https://www.weibo.com/{}".format(
-                                                        self.account.weibo_id)
+        self.home_page_url = "https://www.weibo.com/u/{}".format(
+                                                        self.account.ref_id)
         self.date_time = (datetime.datetime.now() - datetime.timedelta(days=7)).strftime("%Y-%m-%d %H:%M:%S")
 
     def err_report(self, failure):
@@ -45,6 +45,15 @@ class WeiboAccountRule(object):
 
     def get_username(self, html):
         pattern = re.compile(r'\$CONFIG\[\'onick\'\]=\'(.*)\';')
+        m = pattern.search(html)
+        return m.group(1) if m else ''
+
+    def get_userdomain(self, html):
+        """
+        :param html:
+        :return:用户类型
+        """
+        pattern = re.compile(r'uid=.*?&domain=(.*?)&pid=')
         m = pattern.search(html)
         return m.group(1) if m else ''
 
@@ -163,6 +172,8 @@ class WeiboAccountRule(object):
         name = self.get_username(html)
         account_id = self.get_userid(html)
         photo = self.get_headimg(html)
+        user_domain = self.get_userdomain(html)
+
         try:
             person_infos = self.get_fans_status(html)
             if not person_infos:
@@ -177,9 +188,9 @@ class WeiboAccountRule(object):
         user_dic = {
             'weibo_name': name,
             'ref_id': account_id,
-            # 'weibo_photo': photo,
+            'weibo_id': user_domain,
+            'weibo_photo': photo,
             'site': self.site,
-            # 'type': self.account_type,
             'weibo_followers': followers,
             'weibo_tweets': tweets,
             'weibo_following': following,

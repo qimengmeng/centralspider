@@ -6,6 +6,9 @@ import requests
 from central.items.basis import (
                     TweetItem,
 )
+from central.items.crawlmanage import (
+                    SMAccountItem,
+)
 
 
 
@@ -14,27 +17,26 @@ class ImageDownloader(object):
     a spider middleware to repalce image url
     """
     def process_spider_output(self, response, result, spider):
-        for r in result:
-            if not isinstance(r, (TweetItem, )):
-                yield r
 
-            else:
-                image_urls = r["image_urls"]
+        config = spider.config
+        upload_url = config.get("IMAGE", "UPLOAD_URL")
+
+        for obj in result:
+
+            if isinstance(obj, (TweetItem, )):
+                image_urls = obj["image_urls"]
 
                 if len(image_urls) == 0:
-                    yield r
+                    yield obj
 
                 else:
 
                     top_image_url = image_urls[0]
 
-                    config = spider.config
-
-                    upload_url = config.get("IMAGE", "UPLOAD_URL")
 
                     formdata = {
                                    "image_source_url": top_image_url,
-                                   "image_destination": r["image_path_base"],
+                                   "image_destination": obj["image_path_base"],
                                    "thumbnail": "true",
                                    "blur": "false",
                                }
@@ -43,9 +45,31 @@ class ImageDownloader(object):
                     rep = eval(rep)
                     status_code = rep.get("status")
                     if int(status_code) == 200:
-                        r["images"].append(rep.get("paths"))
+                        obj["images"].append(rep.get("paths"))
 
-                    yield r
+                    yield obj
+
+            elif isinstance(obj, (SMAccountItem, )):
+                weibo_photo = obj.get("weibo_photo")
+                weibo_id = obj.get("weibo_id")
+
+                formdata = {
+                    "image_source_url": weibo_photo,
+                    "image_destination": "WeiboImages/%s" % weibo_id,
+                    "thumbnail": "true",
+                    "blur": "false",
+                }
+                rep = requests.post(url=upload_url, data=formdata).json()
+
+                rep = eval(rep)
+                status_code = rep.get("status")
+                if int(status_code) == 200:
+                    obj["weibo_photo"] = rep.get("paths").get("images")
+
+                    yield obj
+
+            else:
+                yield obj
 
 
 

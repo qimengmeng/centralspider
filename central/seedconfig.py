@@ -47,7 +47,7 @@ TWEET = [
 
         "operation": {
                 'lang': 0,
-                'news_type': 2,
+                'news_type': 1,
                 'category': 0,
                 'country': 0,
                 'url_source': 'https://weibo.com/'
@@ -70,7 +70,7 @@ HOTSEARCH = [
 
         "operation": {
                 'lang': 0,
-                'news_type': 2,
+                'news_type': 1,
                 'category': 0,
                 'country': 0,
                 'url_source': 'https://weibo.com/'

@@ -34,7 +34,7 @@ DOWNLOADER_MIDDLEWARES = {
 
 SPIDER_MIDDLEWARES = {
 
-            "central.middlewares.spider.imagesave.ImageDownloader": 644,
+            # "central.middlewares.spider.imagesave.ImageDownloader": 644,
         }
 
 EXTENSIONS = {
@@ -44,6 +44,7 @@ EXTENSIONS = {
     'central.extensions.mq.Kafkaqueue': 501,
     'central.extensions.logger.MSLogger': 502,
     'central.extensions.db.Db': 503,
+    'central.extensions.es.ESearch': 504,
  }
 
 # RETRY
@@ -52,7 +53,7 @@ RETRY_TIMES = 5  # initial response + 5 retries = 6 requests
 
 ITEM_PIPELINES = {
       "central.pipelines.socialmedia.SocialmediaPipeline": 601,
-      "central.pipelines.tweet.TweetPipeline": 602,
+      # "central.pipelines.tweet.TweetPipeline": 602,
       "central.pipelines.hotsearch.HotsearchPipeline": 603,
 }
 

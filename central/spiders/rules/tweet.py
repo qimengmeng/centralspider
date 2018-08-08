@@ -1,23 +1,25 @@
 # -*- coding: utf-8 -*-
 
 import re
-import requests
 import sys
 import random
-from datetime import datetime
-from datetime import timedelta
-from lxml import etree
+import json
+from datetime import (
+    datetime, timedelta
+)
 
 reload(sys)
 sys.setdefaultencoding('utf8')
 
+import logging
+from bs4 import BeautifulSoup
 from scrapy import Request
 from scrapy.spidermiddlewares.httperror import HttpError
 from twisted.internet.error import DNSLookupError
 from twisted.internet.error import TimeoutError, TCPTimedOutError
 
 from central.items.basis import (
-    TweetItem
+    TweetItem, TweetImageItem,
 
 )
 
@@ -32,10 +34,9 @@ class WeiboTweetRule(object):
 
         self.mslogger = self.spider.mslogger
 
-        self.home_page_url = "https://weibo.cn/u/{}?filter=0&page=1".format(
+        self.home_page_url = "https://weibo.com/u/{}?is_ori=1".format(
                                                    self.account.ref_id)
 
-        self.detail_url = "https://weibo.cn/comment/{}?ckAll=1"
         self.cookie = {
             'SUB': ''.join([
                 '_2A',
@@ -79,52 +80,177 @@ class WeiboTweetRule(object):
             dont_filter=True,
         )
 
+
     def parse(self, response):
+        html = response.body.decode(response.encoding)
+        cont = self.get_weibo_infos_right(html)
 
-        html = str(response.body.decode(response.encoding))
+        if not cont:
+            return
+        # 获取所有微博信息列表
+        soup = BeautifulSoup(cont, "lxml")
+        feed_list = soup.find_all(attrs={'action-type': 'feed_list_item'})
+        for data in feed_list:
+            for item in self.get_weibo_info_detail(data, cont):
+                yield item
 
-        selector = etree.HTML(html)
-        feed_list = selector.xpath("//div[@class='c']")
 
-        for feed in feed_list:
-            if not feed.attrib.get('id'):
-                continue
-            item = self.get_weibo_info(feed)
+    def get_weibo_infos_right(self, html):
+        """
+        通过网页获取用户主页右边部分（即微博部分）字符串
+        :param html:
+        :return:
+        """
+        soup = BeautifulSoup(html, "lxml")
+        scripts = soup.find_all('script')
+        pattern = re.compile(r'FM.view\((.*)\)')
 
-            yield item
+        # 如果字符串'fl_menu'(举报或者帮上头条)这样的关键字出现在script中，则是微博数据区域
+        cont = ''
+        for script in scripts:
+            m = pattern.search(script.string)
+            if m and 'fl_menu' in script.string:
+                all_info = m.group(1)
+                cont += json.loads(all_info).get('html', '')
+        return cont
 
-    # 获取用户微博内容及对应的发布时间、点赞数、转发数、评论数
-    def get_weibo_info(self, feed):
 
-        # 微博内容
-        str_t = feed.xpath("div/span[@class='ctt']")
-        weibo_content = str_t[0].xpath("string(.)").encode(
-            sys.stdout.encoding, "ignore").decode(
-            sys.stdout.encoding)
-        weibo_content = weibo_content[:-1]
-        weibo_id = feed.xpath("@id")[0][2:]
 
-        # 查重开启并且确认重复
-        if self.spider.download_filter.check_and_update(weibo_id):
+    def get_tweet_image_dic(self, each):
+        weibo_base_html = each.find(
+            attrs={'node-type': 'feed_content'}
+        ).find_all(
+            attrs={'class': 'WB_pic'}
+        )
+
+        # 只取9张
+        weibo_base_html = weibo_base_html[0:9]
+
+        tweet_image_items = []
+        for num in range(len(weibo_base_html), 0, -1):
+            image_url = weibo_base_html[len(weibo_base_html) - num].find("img").get("src")
+
+            # 替换图片清晰度参数
+            image_url = self.replace_image_pixel(image_url)
+            image_url = self.url_for(image_url)
+            priority = num
+            is_gif = 1 if image_url.endswith('.gif') else 0
+            tweet_image_dic = {
+                'image': image_url,
+                'priority': priority,
+                'is_gif': is_gif,
+            }
+            tweet_image_item = TweetImageItem(**tweet_image_dic)
+            tweet_image_items.append(tweet_image_item)
+        return tweet_image_items
+
+
+    def replace_image_pixel(self, image_url):
+        def replace_pixel(m):
+            url = m.group()
+            replace_url = 'sinaimg.cn/mw690/'
+            return replace_url
+
+        regex = 'sinaimg.cn/.*?/'
+        retags = re.compile(regex, re.DOTALL | re.IGNORECASE)
+
+        return retags.sub(replace_pixel, image_url)
+
+
+    def parse_weibo_text(self, response):
+        meta = response.meta
+        tweet_dic = meta.get('tweet_dic', '')
+
+        weibo_html = response.body.decode(response.encoding)
+        weibo_info_html = self.get_weibo_infos_right(weibo_html)
+        each = BeautifulSoup(weibo_info_html, "lxml")
+
+        retweet_num = each.find(attrs={'node-type': 'forward_btn_text'}).find_all("em")[1].get_text()
+        comment_num = each.find(attrs={'node-type': 'comment_btn_text'}).find_all("em")[1].get_text()
+        up_num = each.find(attrs={'node-type': 'like_status'}).find_all("em")[1].get_text()
+
+        try:
+            weibo_base_html = each.find(
+                attrs={'node-type': 'feed_content'}
+            ).find(
+                attrs={'node-type': 'feed_list_content'}
+            )
+        except Exception as e:
+            logging.error(
+                '本次解析微博详情页出错，具体是{},详情页{}'.format(
+                    e, str(each)
+                )
+            )
             return
 
-        a_link = feed.xpath(
-            "div/span[@class='ctt']/a/@href")
-        if a_link:
-            if (a_link[-1] == "/comment/" + weibo_id or
-                                "/comment/" + weibo_id + "?" in a_link[-1]):
-                weibo_link = "https://weibo.cn" + a_link[-1]
-                wb_content = self.get_long_weibo(weibo_link)
-                if wb_content:
-                    weibo_content = wb_content
+        content = str(weibo_base_html)
+
+        tweet_dic.update(
+                {
+                    "retweet_num": retweet_num,
+                    "comment_num": comment_num,
+                    "up_num": up_num,
+                    "content": content,
+                }
+
+            )
+
+        tweet_item = TweetItem(**tweet_dic)
+
+        yield tweet_item
+
+    def get_weibo_info_detail(self, each, html):
+
+        tweet_image_items = self.get_tweet_image_dic(each)
+        weibo_pattern = 'mid=(\\d+)'
+        m = re.search(weibo_pattern, str(each))
+        if m:
+            ori_tweet_id = m.group(1)
+        else:
+            logging.warning(
+                '未提取到页面的微博id,页面源码是{}'.format(html)
+            )
+            return
+
+        if self.spider.download_filter.check_and_update(ori_tweet_id):
+            return
+
+        time_url = each.find(attrs={'node-type': 'feed_list_item_date'})
+        publish_tm = time_url.get('title', '')
+        publish_tm = self.format_time(publish_tm)
+        weibo_url = time_url.get('href', '')
+        if 'weibo.com' not in weibo_url:
+            weibo_url = 'https://weibo.com{}'.format(weibo_url)
+
+        weibo_url = re.search(r'(.*?)\?.*', weibo_url).group(1)
+
+        tweet_dic = {
+
+            "url": weibo_url,
+            "publish": publish_tm,
+            "website": self.site,
+            "weibo_id": ori_tweet_id,
+            "operation": self.operation,
+            "account": self.account,
+            "image_path_base": "WeiboImages/%s" % self.account.weibo_id,
+            "images": tweet_image_items,
+
+        }
+
+        yield Request(
+            weibo_url, callback=self.parse_weibo_text, errback=self.err_report,
+            meta={'tweet_dic': tweet_dic}
+        )
 
 
-        # 微博发布时间
-        str_time = feed.xpath("div/span[@class='ct']")
-        str_time = str_time[0].xpath("string(.)").encode(
-            sys.stdout.encoding, "ignore").decode(
-            sys.stdout.encoding)
-        publish_time = str_time.split(u'来自')[0].strip()
+    def url_for(self, url):
+        if 'http' not in url:
+            return 'http:{}'.format(url)
+        else:
+            return url
+
+    def format_time(self, publish_time):
+
         if u"刚刚" in publish_time:
             publish_time = datetime.now().strftime(
                 '%Y-%m-%d %H:%M:%S')
@@ -142,67 +268,11 @@ class WeiboTweetRule(object):
             year = datetime.now().strftime("%Y")
             month = publish_time[0:2]
             day = publish_time[3:5]
-            time = publish_time[7:12].strip()+":00"
+            time = publish_time[7:12].strip() + ":00"
             publish_time = (
                 year + "-" + month + "-" + day + " " + time)
         else:
             publish_time = publish_time[:16].strip() + ":00"
 
-
-        str_footer = feed.xpath("div")[-1]
-
-        image_urls = []
-        if str(str_footer.xpath("a[2]/text()")[0]).strip() == u"原图":
-            top_image_url = str_footer.xpath("a[2]/@href")[0]
-            image_base = "http://wx2.sinaimg.cn/large/{}.jpg"
-            image_pattern = r"u=(.*)"
-            r = re.search(image_pattern, top_image_url)
-            r = r.group(1)
-            top_image_url = image_base.format(r)
-            image_urls.append(top_image_url)
-        pattern = r"\d+\.?\d*"
-        str_footer = str_footer.xpath("string(.)").encode(
-            sys.stdout.encoding, "ignore").decode(sys.stdout.encoding)
-        str_footer = str_footer[str_footer.rfind(u'赞'):]
-        guid = re.findall(pattern, str_footer, re.M)
-
-        # 点赞数
-        up_num = int(guid[0])
-
-        # 转发数
-        retweet_num = int(guid[1])
-
-        # 评论数
-        comment_num = int(guid[2])
-
-        tweet_dic = {
-
-            "url": self.detail_url.format(weibo_id),
-            "publish": publish_time,
-            "website": self.site,
-            "content": weibo_content,
-            "weibo_id": weibo_id,
-            "up_num": up_num,
-            "retweet_num": retweet_num,
-            "comment_num": comment_num,
-            "operation": self.operation,
-            "image_urls": image_urls,
-            "account": self.account,
-            "image_path_base": "WeiboImages/%s" % self.account.weibo_id,
-            "images": [],
-
-        }
-
-        return TweetItem(**tweet_dic)
-
-    def get_long_weibo(self, weibo_link):
-
-        html = requests.get(weibo_link, cookies=self.cookie).content
-        selector = etree.HTML(html)
-        info = selector.xpath("//div[@class='c']")[1]
-        wb_content = info.xpath("div/span[@class='ctt']")[0].xpath(
-            "string(.)").encode(sys.stdout.encoding, "ignore").decode(
-            sys.stdout.encoding)
-        wb_content = wb_content[1:]
-        return wb_content
+        return publish_time
 
