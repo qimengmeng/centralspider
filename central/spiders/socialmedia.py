@@ -26,7 +26,10 @@ class SocialmediaSpider(Spider):
             if task.get('name') == "weibo_account":
                 weibo_accounts = self.db_session.query(SocialMedia).filter(SocialMedia.site == "weibo").all()
                 for weibo_account in weibo_accounts:
-                    task.update(account=weibo_account)
+                    task.update(
+                        account=weibo_account,
+                        spider=self
+                    )
                     rule = WeiboAccountRule(**task)
                     yield self.make_requests_from_url(
                             rule

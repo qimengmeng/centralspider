@@ -79,7 +79,6 @@ class SocialmediaPipeline(object):
 
         socialmeida = item_dic.get('account')
         update_dic = {
-            'site': socialmeida.site,
             'weibo_id': item_dic.get("weibo_id"),
             'weibo_name': item_dic.get('weibo_name'),
             'weibo_followers': item_dic.get('weibo_followers'),
@@ -99,13 +98,15 @@ class SocialmediaPipeline(object):
             logging.info(e)
             db_session.rollback()
 
-        self.save_to_es(socialmeida)
+        self.save_to_es(item_dic)
 
 
-    def save_to_es(self, socialmedia):
+    def save_to_es(self, item_dic):
 
+        socialmedia = item_dic.get('account')
         response = self.es_client.search(
             index="socialmedia",
+            doc_type="socialmedia",
             body={
                 "query": {
                     "term": {
@@ -116,7 +117,9 @@ class SocialmediaPipeline(object):
                 },
             )
 
+
         total = response["hits"]["total"]
+        sources = response["hits"]["hits"]
 
         if total == 0:
             body = {
@@ -128,7 +131,9 @@ class SocialmediaPipeline(object):
                   "weibo_tweets": socialmedia.weibo_tweets,
                   "weibo_followers": socialmedia.weibo_followers,
                   "weibo_following": socialmedia.weibo_following,
-                  "weibo_brief": socialmedia.weibo_brief
+                  "weibo_brief": socialmedia.weibo_brief,
+                  "tags": socialmedia.type.split(","),
+                  "thumb_image": item_dic.get("thumb_image")
                     }
 
             res = self.es_client.index(
@@ -137,26 +142,26 @@ class SocialmediaPipeline(object):
                         body=body,
                         id=None
                     )
-            logging.debug(res["created"])
+            logging.debug(res["result"])
 
         elif total == 1:
-            # body = {
-            #     "weibo_tweets": socialmedia.weibo_tweets,
-            #     "weibo_followers": socialmedia.weibo_followers,
-            #     "weibo_following": socialmedia.weibo_following,
-            # }
+
+            source = sources[0]
             res = self.es_client.update(
-                        index='indexName',
-                        doc_type='typeName',
-                        id=socialmedia.ref_id,
+                        index='socialmedia',
+                        doc_type='socialmedia',
+                        id=source.get("_id"),
                         body={
+                            "doc": {
                               "weibo_tweets": socialmedia.weibo_tweets,
                               "weibo_followers": socialmedia.weibo_followers,
                               "weibo_following": socialmedia.weibo_following,
+                              "account_domain": socialmedia.weibo_id
                               }
-                          )
+                          }
+                           )
 
-            logging.debug(res["created"])
+            logging.debug(res["result"])
 
         else:
             raise

@@ -20,3 +20,4 @@ class SMAccountItem(Item):
     weibo_following = Field()
     weibo_brief = Field()
     account = Field()
+    thumb_image = Field()

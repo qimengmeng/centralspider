@@ -1,7 +1,8 @@
 # -*- coding:utf-8 -*-
 
 from basis import (
-    SocialmediaType, TweetType,
+    SocialmediaType,
+    TweetType,
 )
 
 

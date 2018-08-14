@@ -3,7 +3,8 @@
 
 from elasticsearch_dsl import (
     DocType, Date, Nested, Boolean,
-    analyzer, Completion, Keyword, Text, Integer
+    analyzer, Completion, Keyword, Text, Integer, Mapping,
+
 )
 
 from elasticsearch_dsl.analysis import CustomAnalyzer as _CustomAnalyzer
@@ -20,7 +21,7 @@ class SocialmediaType(DocType):
 
     suggest = Completion(analyzer=ik_analyzer)
     site = Keyword()
-    account_id = Integer()
+    account_id = Keyword()
     account_domain = Keyword()
     weibo_name = Text(analyzer="ik_max_word")
     weibo_photo = Keyword()
@@ -28,9 +29,20 @@ class SocialmediaType(DocType):
     weibo_followers = Integer()
     weibo_following = Integer()
     weibo_brief = Text(analyzer="ik_max_word")
+    thumb_image = Keyword()
+    tags = Keyword()
+
 
     class Meta:
         index = "socialmedia"
+        doc_type = "socialmedia"
+
+        settings = {
+            "number_of_shards": 5,
+            }
+
+
+
 
 
 class TweetType(DocType):
@@ -47,9 +59,14 @@ class TweetType(DocType):
     retweet_num = Integer()
     comment_num = Integer()
     s3_images = Keyword()
-    thumb_image = Keyword()
+    thumb_images = Keyword()
     tags = Text(analyzer="ik_max_word")
 
     class Meta:
         index = "tweet"
+        doc_type = "tweet"
+
+        settings = {
+            "number_of_shards": 5,
+        }
 

@@ -8,9 +8,11 @@ import sys
 reload(sys)
 sys.setdefaultencoding('utf8')
 
-
+import requests
 from bs4 import BeautifulSoup
-from scrapy import Request
+from scrapy import (
+    Request, FormRequest
+)
 
 from central.items.crawlmanage import (
                     SMAccountItem,
@@ -24,6 +26,7 @@ class WeiboAccountRule(object):
         self.site = kwargs.get('site')
         self.home_page_url = "https://www.weibo.com/u/{}".format(
                                                         self.account.ref_id)
+        self.spider = kwargs.get("spider")
         self.date_time = (datetime.datetime.now() - datetime.timedelta(days=7)).strftime("%Y-%m-%d %H:%M:%S")
 
     def err_report(self, failure):
@@ -53,7 +56,7 @@ class WeiboAccountRule(object):
         :param html:
         :return:用户类型
         """
-        pattern = re.compile(r'uid=.*?&domain=(.*?)&pid=')
+        pattern = re.compile(r'uid=.*?&domain=([^\\"&]*).*?&pid=')
         m = pattern.search(html)
         return m.group(1) if m else ''
 
@@ -208,7 +211,28 @@ class WeiboAccountRule(object):
             )
             return
 
-        return user_item
+        config = self.spider.config
+        upload_url = config.get("IMAGE", "UPLOAD_URL")
+        data = {
+                       "image_source_url": user_item.get("weibo_photo"),
+                       "image_destination": "WeiboImages/%s" % user_item.get("ref_id"),
+                       "thumbnail": "true",
+                       "blur": "false",
+                   }
+
+        rep = requests.post(url=upload_url, data=data).json()
+
+        rep = eval(rep)
+        status_code = rep.get("status")
+
+        if int(status_code) == 200:
+            user_item["weibo_photo"] = rep.get("paths").get("image")
+            user_item["thumb_image"] = rep.get("paths").get("thumbnail")
+            yield user_item
+
+        else:
+            return
+
 
 
     def url_for(self, url):

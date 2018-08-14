@@ -39,7 +39,8 @@ class ESearch(object):
         # connections.create_connection(hosts=[URL], http_auth=(USER, PASSWORD))
         connections.create_connection(hosts=["127.0.0.1"])
 
-        es_client = Elasticsearch([URL], http_auth=(USER, PASSWORD))
+        # es_client = Elasticsearch([URL], http_auth=(USER, PASSWORD))
+        es_client = Elasticsearch(["localhost"])
         spider.es_client = es_client
 
         logging.info("running spider:%s", spider.name)
