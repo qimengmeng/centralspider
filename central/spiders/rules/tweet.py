@@ -11,6 +11,7 @@ from datetime import (
 reload(sys)
 sys.setdefaultencoding('utf8')
 
+import requests
 import logging
 from bs4 import BeautifulSoup
 from scrapy import Request
@@ -201,7 +202,6 @@ class WeiboTweetRule(object):
 
     def get_weibo_info_detail(self, each, html):
 
-        tweet_image_items = self.get_tweet_image_dic(each)
         weibo_pattern = 'mid=(\\d+)'
         m = re.search(weibo_pattern, str(each))
         if m:
@@ -215,6 +215,7 @@ class WeiboTweetRule(object):
         if self.spider.download_filter.check_and_update(ori_tweet_id):
             return
 
+        tweet_image_items = self.get_tweet_image_dic(each)
         time_url = each.find(attrs={'node-type': 'feed_list_item_date'})
         publish_tm = time_url.get('title', '')
         publish_tm = self.format_time(publish_tm)
@@ -223,6 +224,9 @@ class WeiboTweetRule(object):
             weibo_url = 'https://weibo.com{}'.format(weibo_url)
 
         weibo_url = re.search(r'(.*?)\?.*', weibo_url).group(1)
+        images_info = self.parse_img(tweet_image_items)
+        s3_images = map(lambda x: x.get("image"), images_info)
+        thumb_images = map(lambda x: x.get("thumbnail"), images_info)
 
         tweet_dic = {
 
@@ -232,15 +236,38 @@ class WeiboTweetRule(object):
             "weibo_id": ori_tweet_id,
             "operation": self.operation,
             "account": self.account,
-            "image_path_base": "WeiboImages/%s" % self.account.weibo_id,
-            "images": tweet_image_items,
-
+            "s3_images": s3_images,
+            "thumb_images": thumb_images
         }
 
         yield Request(
             weibo_url, callback=self.parse_weibo_text, errback=self.err_report,
             meta={'tweet_dic': tweet_dic}
         )
+
+    def parse_img(self, image_items):
+        config = self.spider.config
+        upload_url = config.get("IMAGE", "UPLOAD_URL")
+
+        images_info = []
+
+        for image_item in image_items:
+            data = {
+                "image_source_url": image_item.get("image"),
+                "image_destination": "WeiboImages/%s" % self.account.ref_id,
+                "thumbnail": "true",
+                "blur": "false",
+            }
+
+            rep = requests.post(url=upload_url, data=data).json()
+
+            rep = eval(rep)
+            status_code = rep.get("status")
+
+            if int(status_code) == 200:
+                images_info.append(rep.get("paths"))
+
+        return images_info
 
 
     def url_for(self, url):

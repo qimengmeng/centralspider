@@ -17,16 +17,10 @@ class TweetItem(Item):
     comment_num = Field()
     operation = Field()
     account = Field()
+    s3_images = Field()
+    thumb_images = Field()
+    tags = Field()
 
-    ###########
-    # 头图
-    # 1. 首选twitter card中的image，次选og中的image，三选正文中第一个图片
-    # 2. 可以为空
-    image_urls = Field()
-    images = Field()
-    image_path_base = Field()
-
-    ###########
 
 
 class TweetImageItem(Item):

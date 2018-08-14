@@ -71,6 +71,7 @@ class TweetPipeline(object):
         if difference:
             raise DropItem("item is invalid")
 
+        account = item_dic.get("account")
         # 重新封装
         params = {
             'url': item_dic.get('url'),
@@ -86,22 +87,16 @@ class TweetPipeline(object):
             'country':  item_dic["operation"]['country'],
             'lang':  item_dic["operation"]['lang'],
 
-            'share_url': '',
             'publish_source': item_dic.get('website'),
-            'publish_account': '',
+            'publish_account': {
+                                "weibo_name": account.weibo_name,
+                                "weibo_photo": account.weibo_photo
+                                },
             'content': item_dic.get('content'),
-            'top_image': '',
-            's3_image': '',
-            'thumb_image': '',
-            'profile_image': '',
-            'tag_output': '',
-        }
-        if len(item_dic.get('image_urls')) > 0:
-            params['top_image'] = item['image_urls'][0]
+            "s3_images": item_dic.get("s3_images"),
+            "thumb_images": item_dic.get("thumb_images")
 
-        if len(item_dic.get("images")) > 0:
-            params['s3_image'] = item['images'][0]['image']
-            params['thumb_image'] = item["images"][0]["thumbnail"]
+        }
 
         # 转化为json
         message = json.dumps(params).encode('utf-8')

@@ -3,7 +3,7 @@
 
 from elasticsearch_dsl import (
     DocType, Date, Nested, Boolean,
-    analyzer, Completion, Keyword, Text, Integer, Mapping,
+    analyzer, Completion, Keyword, Text, Integer
 
 )
 
@@ -61,6 +61,13 @@ class TweetType(DocType):
     s3_images = Keyword()
     thumb_images = Keyword()
     tags = Text(analyzer="ik_max_word")
+    publish_account = Nested(properties={
+                                        "weibo_name": Keyword(),
+                                        "weibo_photo": Keyword()
+                                        }
+
+                                )
+
 
     class Meta:
         index = "tweet"

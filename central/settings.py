@@ -34,7 +34,6 @@ DOWNLOADER_MIDDLEWARES = {
 
 SPIDER_MIDDLEWARES = {
 
-            # "central.middlewares.spider.imagesave.ImageDownloader": 644,
         }
 
 EXTENSIONS = {
