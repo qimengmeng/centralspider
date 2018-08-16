@@ -90,12 +90,14 @@ class TweetPipeline(object):
                 'publish_account': {
                                     "weibo_name": account.weibo_name,
                                     "weibo_photo": account.weibo_photo,
-                                    "account_id": account.ref_id
+                                    "account_id": account.ref_id,
+                                    "weibo_brief": account.weibo_brief
                                     },
                 'content': item_dic.get('content'),
                 "s3_images": item_dic.get("s3_images"),
                 "thumb_images": item_dic.get("thumb_images"),
-                "tags": item_dic.get("tags")
+                "tags": item_dic.get("tags"),
+                "created_at": datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%S.000Z")
             }
 
         }
