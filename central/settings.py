@@ -52,7 +52,7 @@ RETRY_TIMES = 5  # initial response + 5 retries = 6 requests
 
 ITEM_PIPELINES = {
       "central.pipelines.socialmedia.SocialmediaPipeline": 601,
-      # "central.pipelines.tweet.TweetPipeline": 602,
+      "central.pipelines.tweet.TweetPipeline": 602,
       "central.pipelines.hotsearch.HotsearchPipeline": 603,
 }
 

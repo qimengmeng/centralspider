@@ -13,6 +13,10 @@ sys.setdefaultencoding('utf8')
 
 import requests
 import logging
+import lxml
+from lxml import etree
+from lxml.html.clean import Cleaner
+import w3lib
 from bs4 import BeautifulSoup
 from scrapy import Request
 from scrapy.spidermiddlewares.httperror import HttpError
@@ -38,17 +42,6 @@ class WeiboTweetRule(object):
         self.home_page_url = "https://weibo.com/u/{}?is_ori=1".format(
                                                    self.account.ref_id)
 
-        self.cookie = {
-            'SUB': ''.join([
-                '_2A',
-                ''.join(random.sample(
-                    '250azrYDeRhGeBN6VAZ8SjNzDiIHXVXASsQrDV8PUNbmtAKLWXakW8GBWrXgTJrCbRqCqiZIO1pnAEgKg',
-                    50
-                )
-                ),
-                '..'
-            ])
-        }
 
 
     def err_report(self, failure):
@@ -184,7 +177,8 @@ class WeiboTweetRule(object):
             )
             return
 
-        content = str(weibo_base_html)
+        html = unicode(weibo_base_html)
+        content, tags = self.wash_content(html)
 
         tweet_dic.update(
                 {
@@ -192,6 +186,7 @@ class WeiboTweetRule(object):
                     "comment_num": comment_num,
                     "up_num": up_num,
                     "content": content,
+                    "tags": tags
                 }
 
             )
@@ -199,6 +194,51 @@ class WeiboTweetRule(object):
         tweet_item = TweetItem(**tweet_dic)
 
         yield tweet_item
+
+    def wash_content(self, html):
+
+        cleaner = Cleaner(
+            style=True,
+            scripts=True,
+            page_structure=False,
+            safe_attrs_only=False,
+            remove_tags=["div", "br"],
+            kill_tags=["img"]
+
+        )
+        html = cleaner.clean_html(html)
+        page = etree.HTML(html)
+        tags = []
+
+        for ele in page.getiterator("a"):
+            text = ele.text
+            childs = filter(lambda x: x.tag == "i", list(ele))
+            supertopic = ele.xpath('./i[@class="W_ficon ficon_supertopic"]')
+            if text and u"#" in text:
+                tags.append(text.strip()[:-1])
+                for key in ele.attrib.keys():
+                    ele.attrib.pop(key)
+                ele.tag = "topic"
+                ele.text = text.strip()[1:-1]
+            elif text and u"@" in text:
+                pass
+            elif supertopic:
+                tags.append(u"*{}".format(childs[0].tail.strip()))
+                for key in ele.attrib.keys():
+                    ele.attrib.pop(key)
+                ele.tag = "super"
+                ele.text = childs[0].tail.strip()
+                ele.remove(childs[0])
+            else:
+                ele.getparent().remove(ele)
+
+        content = lxml.html.tostring(
+            page, pretty_print=True, encoding='unicode')
+
+        content = w3lib.html.remove_tags(content, keep=('topic', 'super')).strip()
+
+        return content, tags
+
 
     def get_weibo_info_detail(self, each, html):
 
@@ -212,8 +252,9 @@ class WeiboTweetRule(object):
             )
             return
 
-        if self.spider.download_filter.check_and_update(ori_tweet_id):
-            return
+        # if self.spider.download_filter.check_and_update(ori_tweet_id):
+        #     logging.debug('repeat tweet')
+        #     return
 
         tweet_image_items = self.get_tweet_image_dic(each)
         time_url = each.find(attrs={'node-type': 'feed_list_item_date'})
@@ -225,6 +266,8 @@ class WeiboTweetRule(object):
 
         weibo_url = re.search(r'(.*?)\?.*', weibo_url).group(1)
         images_info = self.parse_img(tweet_image_items)
+        # s3_images = []
+        # thumb_images = []
         s3_images = map(lambda x: x.get("image"), images_info)
         thumb_images = map(lambda x: x.get("thumbnail"), images_info)
 
@@ -259,13 +302,17 @@ class WeiboTweetRule(object):
                 "blur": "false",
             }
 
-            rep = requests.post(url=upload_url, data=data).json()
+            try:
+                rep = requests.post(url=upload_url, data=data).json()
+            except Exception as e:
+                logging.debug(e)
 
-            rep = eval(rep)
-            status_code = rep.get("status")
+            else:
+                rep = eval(rep)
+                status_code = rep.get("status")
 
-            if int(status_code) == 200:
-                images_info.append(rep.get("paths"))
+                if int(status_code) == 200:
+                    images_info.append(rep.get("paths"))
 
         return images_info
 

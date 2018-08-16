@@ -35,7 +35,9 @@ class TweetSpider(Spider):
                                                                     SocialMedia.site == "weibo",
                                                                     SocialMedia.weibo_name != None,
                                                                         )
-                                                                    ).all()
+
+                                                                        ).all()
+                weibo_accounts = weibo_accounts[0:20]
                 for weibo_account in weibo_accounts:
                     task.update(
                         account=weibo_account,

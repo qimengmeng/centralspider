@@ -31,13 +31,12 @@ class TweetinteractSpider(Spider):
         limit_datetime = (datetime.now()-timedelta(days=2)).strftime("%Y-%m-%dT%H:%M:%S.000Z")
 
         result = helpers.scan(client=self.es_client,
-                              index='scrapy',
+                              index='weibo',
                               query={
                                   "_source": ["url", ],
                                   "query": {
                                       "bool": {
                                           "filter": [
-                                              {"term": {"news_type": 1}},
                                               {"range": {
                                                   "publish_time": {"gte": limit_datetime}
                                               }}

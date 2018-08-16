@@ -27,18 +27,6 @@ class TweetinteractRule(object):
         self.weibo_detail_url = kwargs['_source']['url']
         self.doc_id = kwargs["_id"]
 
-        self.cookie = {
-            'SUB': ''.join([
-                '_2A',
-                ''.join(random.sample(
-                    '250azrYDeRhGeBN6VAZ8SjNzDiIHXVXASsQrDV8PUNbmtAKLWXakW8GBWrXgTJrCbRqCqiZIO1pnAEgKg',
-                    50
-                )
-                ),
-                '..'
-            ])
-        }
-
 
     def err_report(self, failure):
         # log all failures
@@ -83,12 +71,14 @@ class TweetinteractRule(object):
         up_num = each.find(attrs={'node-type': 'like_status'}).find_all("em")[1].get_text()
 
         res = self.es_client.update(
-            index='tweet',
+            index='weibo',
             id=self.doc_id,
             body={
-                "up_num": up_num,
-                "retweet_num": retweet_num,
-                "comment_num": comment_num,
+                "doc": {
+                    "up_num": up_num,
+                    "retweet_num": retweet_num,
+                    "comment_num": comment_num
+                    }
                }
             )
 

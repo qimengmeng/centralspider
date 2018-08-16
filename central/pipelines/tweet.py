@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import logging
 import json
+import os
 import datetime
 
 from scrapy.exceptions import (
@@ -74,37 +75,42 @@ class TweetPipeline(object):
         account = item_dic.get("account")
         # 重新封装
         params = {
-            'url': item_dic.get('url'),
-            'publish_time': datetime.datetime.strptime(item_dic.get('publish'), "%Y-%m-%d %H:%M:%S").strftime(
-                "%Y-%m-%dT%H:%M:%S.000Z"),
-            "weibo_id": item_dic.get("weibo_id"),
-            "up_num": item_dic.get("up_num"),
-            "retweet_num": item_dic.get("retweet_num"),
-            "comment_num": item_dic.get("comment_num"),
+            "index": "weibo",
+            "type": "weibo",
+            "_source": {
 
-            'news_type': item_dic["operation"]['news_type'],
-            'category': item_dic["operation"]['category'],
-            'country':  item_dic["operation"]['country'],
-            'lang':  item_dic["operation"]['lang'],
-
-            'publish_source': item_dic.get('website'),
-            'publish_account': {
-                                "weibo_name": account.weibo_name,
-                                "weibo_photo": account.weibo_photo
-                                },
-            'content': item_dic.get('content'),
-            "s3_images": item_dic.get("s3_images"),
-            "thumb_images": item_dic.get("thumb_images")
+                'url': item_dic.get('url'),
+                'publish_time': datetime.datetime.strptime(item_dic.get('publish'), "%Y-%m-%d %H:%M:%S").strftime(
+                    "%Y-%m-%dT%H:%M:%S.000Z"),
+                "weibo_id": item_dic.get("weibo_id"),
+                "up_num": item_dic.get("up_num"),
+                "retweet_num": item_dic.get("retweet_num"),
+                "comment_num": item_dic.get("comment_num"),
+                'publish_source': item_dic.get('website'),
+                'publish_account': {
+                                    "weibo_name": account.weibo_name,
+                                    "weibo_photo": account.weibo_photo,
+                                    "account_id": account.ref_id
+                                    },
+                'content': item_dic.get('content'),
+                "s3_images": item_dic.get("s3_images"),
+                "thumb_images": item_dic.get("thumb_images"),
+                "tags": item_dic.get("tags")
+            }
 
         }
 
         # 转化为json
         message = json.dumps(params).encode('utf-8')
 
-        try:
-            producer.send('news_streaming', str(message))
-            producer.flush()
-        except KafkaError as e:
-            logging.info(e)
+        self.put_aws(message)
+        logging.debug("------")
+
+    def put_aws(self, data):
+        os.system(
+            "aws kinesis put-record --stream-name Foo --data '{}' \
+               --partition-key partitionKey1 --region cn-north-1".format(data)
+        )
+
 
 

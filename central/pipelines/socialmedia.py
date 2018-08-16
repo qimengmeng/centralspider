@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import logging
+from xpinyin import Pinyin
 
 from scrapy.exceptions import (
     DropItem,
@@ -16,6 +17,7 @@ from central.items.crawlmanage import (
 )
 
 
+pinyin = Pinyin()
 
 class SocialmediaPipeline(object):
 
@@ -105,8 +107,8 @@ class SocialmediaPipeline(object):
 
         socialmedia = item_dic.get('account')
         response = self.es_client.search(
-            index="socialmedia",
-            doc_type="socialmedia",
+            index="account_weibo",
+            doc_type="account_weibo",
             body={
                 "query": {
                     "term": {
@@ -122,6 +124,11 @@ class SocialmediaPipeline(object):
         sources = response["hits"]["hits"]
 
         if total == 0:
+            alpha = pinyin.get_pinyin(socialmedia.weibo_name, show_tone_marks=True)[0].upper()
+
+            if alpha not in [unichr(ch) for ch in xrange(0x41, 0x5B)]:
+                alpha = u'其他'
+
             body = {
                   "site": socialmedia.site,
                   "account_id": socialmedia.ref_id,
@@ -133,12 +140,13 @@ class SocialmediaPipeline(object):
                   "weibo_following": socialmedia.weibo_following,
                   "weibo_brief": socialmedia.weibo_brief,
                   "tags": socialmedia.type.split(","),
-                  "thumb_image": item_dic.get("thumb_image")
+                  "thumb_image": item_dic.get("thumb_image"),
+                  "alpha": alpha
                     }
 
             res = self.es_client.index(
-                        index='socialmedia',
-                        doc_type='socialmedia',
+                        index='account_weibo',
+                        doc_type='account_weibo',
                         body=body,
                         id=None
                     )
@@ -148,15 +156,14 @@ class SocialmediaPipeline(object):
 
             source = sources[0]
             res = self.es_client.update(
-                        index='socialmedia',
-                        doc_type='socialmedia',
+                        index='account_weibo',
+                        doc_type='account_weibo',
                         id=source.get("_id"),
                         body={
                             "doc": {
                               "weibo_tweets": socialmedia.weibo_tweets,
                               "weibo_followers": socialmedia.weibo_followers,
                               "weibo_following": socialmedia.weibo_following,
-                              "account_domain": socialmedia.weibo_id
                               }
                           }
                            )

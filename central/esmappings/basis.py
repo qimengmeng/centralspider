@@ -16,6 +16,7 @@ class CustomAnalyzer(_CustomAnalyzer):
 ik_analyzer = CustomAnalyzer("ik_max_word", filter=["lowercase"])
 
 
+
 class SocialmediaType(DocType):
     # 微博账户类型
 
@@ -31,11 +32,12 @@ class SocialmediaType(DocType):
     weibo_brief = Text(analyzer="ik_max_word")
     thumb_image = Keyword()
     tags = Keyword()
+    alpha = Keyword()
 
 
     class Meta:
-        index = "socialmedia"
-        doc_type = "socialmedia"
+        index = "account_weibo"
+        doc_type = "account_weibo"
 
         settings = {
             "number_of_shards": 5,
@@ -43,13 +45,10 @@ class SocialmediaType(DocType):
 
 
 
-
-
 class TweetType(DocType):
     #微博类型
 
     suggest = Completion(analyzer=ik_analyzer)
-    socialmedia_id = Integer()
     url = Keyword()
     publish_time = Date()
     publish_source = Keyword()
@@ -63,15 +62,15 @@ class TweetType(DocType):
     tags = Text(analyzer="ik_max_word")
     publish_account = Nested(properties={
                                         "weibo_name": Keyword(),
-                                        "weibo_photo": Keyword()
+                                        "weibo_photo": Keyword(),
+                                        "account_id": Keyword()
                                         }
 
                                 )
 
-
     class Meta:
-        index = "tweet"
-        doc_type = "tweet"
+        index = "weibo"
+        doc_type = "weibo"
 
         settings = {
             "number_of_shards": 5,

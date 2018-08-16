@@ -9,7 +9,7 @@ class RandomCookieMiddleware(object):
         随机指定一个cookies
         """
     def process_request(self, request, spider):
-        if spider.name in ['central_socialmedia', 'central_tweet']:
+        if spider.name in ['central_socialmedia', 'central_tweet', 'central_tweetinteract']:
             ck = {
                 'SUB': ''.join([
                     '_2A',

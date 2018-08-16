@@ -32,15 +32,11 @@ class ESearch(object):
         config = spider.config
 
         URL = config.get("ELASTICSEARCH", "URL")
-        USER = config.get("ELASTICSEARCH", "USER")
-        PASSWORD = config.get("ELASTICSEARCH", "PASSWORD")
 
         #Elasticsearch ORM初始化连接
-        # connections.create_connection(hosts=[URL], http_auth=(USER, PASSWORD))
-        connections.create_connection(hosts=["127.0.0.1"])
+        connections.create_connection(hosts=[URL])
 
-        # es_client = Elasticsearch([URL], http_auth=(USER, PASSWORD))
-        es_client = Elasticsearch(["localhost"])
+        es_client = Elasticsearch([URL])
         spider.es_client = es_client
 
         logging.info("running spider:%s", spider.name)
