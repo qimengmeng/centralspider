@@ -9,12 +9,6 @@ from elasticsearch import (
 )
 from elasticsearch_dsl.connections import connections
 
-from central.esmappings import (
-    SocialmediaType, TweetType
-)
-
-
-
 
 class ESearch(object):
     """类说明

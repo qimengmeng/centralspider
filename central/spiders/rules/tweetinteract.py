@@ -20,7 +20,7 @@ class TweetinteractRule(object):
 
     def __init__(self, **kwargs):
         self.spider = kwargs.get("spider")
-        self.es_client = self.spider.es_clinet
+        self.es_client = self.spider.es_client
 
         self.mslogger = self.spider.mslogger
 
@@ -72,6 +72,7 @@ class TweetinteractRule(object):
 
         res = self.es_client.update(
             index='weibo',
+            doc_type='weibo',
             id=self.doc_id,
             body={
                 "doc": {
@@ -82,7 +83,7 @@ class TweetinteractRule(object):
                }
             )
 
-        logging.debug(res["created"])
+        logging.debug(res["result"])
 
 
     def get_weibo_infos_right(self, html):
