@@ -252,9 +252,9 @@ class WeiboTweetRule(object):
             )
             return
 
-        # if self.spider.download_filter.check_and_update(ori_tweet_id):
-        #     logging.debug('repeat tweet')
-        #     return
+        if self.spider.download_filter.check_and_update(ori_tweet_id):
+            logging.debug('repeat tweet')
+            return
 
         tweet_image_items = self.get_tweet_image_dic(each)
         time_url = each.find(attrs={'node-type': 'feed_list_item_date'})
@@ -266,10 +266,9 @@ class WeiboTweetRule(object):
 
         weibo_url = re.search(r'(.*?)\?.*', weibo_url).group(1)
         images_info = self.parse_img(tweet_image_items)
-        # s3_images = []
-        # thumb_images = []
         s3_images = map(lambda x: x.get("image"), images_info)
         thumb_images = map(lambda x: x.get("thumbnail"), images_info)
+        tiny_images = map(lambda x: x.get("tiny"), images_info)
 
         tweet_dic = {
 
@@ -280,7 +279,8 @@ class WeiboTweetRule(object):
             "operation": self.operation,
             "account": self.account,
             "s3_images": s3_images,
-            "thumb_images": thumb_images
+            "thumb_images": thumb_images,
+            "tiny_images": tiny_images
         }
 
         yield Request(
@@ -300,6 +300,7 @@ class WeiboTweetRule(object):
                 "image_destination": "WeiboImages/%s" % self.account.ref_id,
                 "thumbnail": "true",
                 "blur": "false",
+                "tiny": "true",
             }
 
             try:

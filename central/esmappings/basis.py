@@ -58,6 +58,7 @@ class TweetType(DocType):
     retweet_num = Integer()
     comment_num = Integer()
     s3_images = Keyword()
+    tiny_images = Keyword()
     thumb_images = Keyword()
     tags = Text(analyzer="ik_max_word")
     created_at = Date()

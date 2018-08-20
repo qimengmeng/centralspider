@@ -15,7 +15,7 @@ DB = 0
 URL = 52.80.17.255:9200
 [IMAGE]
 PREFIX = https://dw-temp.s3.cn-north-1.amazonaws.com.cn/
-UPLOAD_URL = http://54.222.222.42:7771/basic/downloadByUrl
+UPLOAD_URL = http://54.222.222.42:6001/basic/downloadByUrlTiny
 [TAG]
 URL = http://master:5301/basic/tagging
 [TRANSLATE]

@@ -96,6 +96,7 @@ class TweetPipeline(object):
                 'content': item_dic.get('content'),
                 "s3_images": item_dic.get("s3_images"),
                 "thumb_images": item_dic.get("thumb_images"),
+                "tiny_images": item_dic.get("tiny_images"),
                 "tags": item_dic.get("tags"),
                 "created_at": datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%S.000Z")
             }

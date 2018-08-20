@@ -19,6 +19,7 @@ class TweetItem(Item):
     account = Field()
     s3_images = Field()
     thumb_images = Field()
+    tiny_images = Field()
     tags = Field()
 
 
