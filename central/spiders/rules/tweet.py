@@ -252,6 +252,7 @@ class WeiboTweetRule(object):
             )
             return
 
+        #布隆过滤去重
         if self.spider.download_filter.check_and_update(ori_tweet_id):
             logging.debug('repeat tweet')
             return
