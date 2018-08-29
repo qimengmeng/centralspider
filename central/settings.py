@@ -44,6 +44,7 @@ EXTENSIONS = {
     'central.extensions.logger.MSLogger': 502,
     'central.extensions.db.Db': 503,
     'central.extensions.es.ESearch': 504,
+    'central.extensions.clproducer.CeleryProducer': 505,
  }
 
 # RETRY

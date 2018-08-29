@@ -110,47 +110,6 @@ class WeiboTweetRule(object):
 
 
 
-    def get_tweet_image_dic(self, each):
-        weibo_base_html = each.find(
-            attrs={'node-type': 'feed_content'}
-        ).find_all(
-            attrs={'class': 'WB_pic'}
-        )
-
-        # 只取9张
-        weibo_base_html = weibo_base_html[0:9]
-
-        tweet_image_items = []
-        for num in range(len(weibo_base_html), 0, -1):
-            image_url = weibo_base_html[len(weibo_base_html) - num].find("img").get("src")
-
-            # 替换图片清晰度参数
-            image_url = self.replace_image_pixel(image_url)
-            image_url = self.url_for(image_url)
-            priority = num
-            is_gif = 1 if image_url.endswith('.gif') else 0
-            tweet_image_dic = {
-                'image': image_url,
-                'priority': priority,
-                'is_gif': is_gif,
-            }
-            tweet_image_item = TweetImageItem(**tweet_image_dic)
-            tweet_image_items.append(tweet_image_item)
-        return tweet_image_items
-
-
-    def replace_image_pixel(self, image_url):
-        def replace_pixel(m):
-            url = m.group()
-            replace_url = 'sinaimg.cn/mw690/'
-            return replace_url
-
-        regex = 'sinaimg.cn/.*?/'
-        retags = re.compile(regex, re.DOTALL | re.IGNORECASE)
-
-        return retags.sub(replace_pixel, image_url)
-
-
     def parse_weibo_text(self, response):
         meta = response.meta
         tweet_dic = meta.get('tweet_dic', '')
@@ -257,7 +216,6 @@ class WeiboTweetRule(object):
             logging.debug('repeat tweet')
             return
 
-        tweet_image_items = self.get_tweet_image_dic(each)
         time_url = each.find(attrs={'node-type': 'feed_list_item_date'})
         publish_tm = time_url.get('title', '')
         publish_tm = self.format_time(publish_tm)
@@ -266,10 +224,9 @@ class WeiboTweetRule(object):
             weibo_url = 'https://weibo.com{}'.format(weibo_url)
 
         weibo_url = re.search(r'(.*?)\?.*', weibo_url).group(1)
-        images_info = self.parse_img(tweet_image_items)
-        s3_images = map(lambda x: x.get("image"), images_info)
-        thumb_images = map(lambda x: x.get("thumbnail"), images_info)
-        tiny_images = map(lambda x: x.get("tiny"), images_info)
+        s3_images = []
+        thumb_images = []
+        tiny_images = []
 
         tweet_dic = {
 
@@ -288,35 +245,6 @@ class WeiboTweetRule(object):
             weibo_url, callback=self.parse_weibo_text, errback=self.err_report,
             meta={'tweet_dic': tweet_dic}
         )
-
-    def parse_img(self, image_items):
-        config = self.spider.config
-        upload_url = config.get("IMAGE", "UPLOAD_URL")
-
-        images_info = []
-
-        for image_item in image_items:
-            data = {
-                "image_source_url": image_item.get("image"),
-                "image_destination": "WeiboImages/%s" % self.account.ref_id,
-                "thumbnail": "true",
-                "blur": "false",
-                "tiny": "true",
-            }
-
-            try:
-                rep = requests.post(url=upload_url, data=data).json()
-            except Exception as e:
-                logging.debug(e)
-
-            else:
-                rep = eval(rep)
-                status_code = rep.get("status")
-
-                if int(status_code) == 200:
-                    images_info.append(rep.get("paths"))
-
-        return images_info
 
 
     def url_for(self, url):
