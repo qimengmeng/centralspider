@@ -13,10 +13,9 @@ from central.esmappings import (
     TweetType,
 )
 
-
 class TweetimageSpider(Spider):
     """
-    微博互动量更新
+    微博图片更新
     """
 
     name = 'central_tweetimage'
@@ -29,7 +28,7 @@ class TweetimageSpider(Spider):
 
     def start_requests(self):
 
-        limit_datetime = (datetime.now()-timedelta(days=15)).strftime("%Y-%m-%dT%H:%M:%S.000Z")
+        limit_datetime = (datetime.now()-timedelta(days=1)).strftime("%Y-%m-%dT%H:%M:%S.000Z")
 
         result = helpers.scan(client=self.es_client,
                                 index='weibo',
