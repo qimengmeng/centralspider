@@ -212,7 +212,7 @@ class WeiboAccountRule(object):
             return
 
         config = self.spider.config
-        upload_url = config.get("IMAGE", "UPLOAD_URL")
+        upload_url = config.get("IMAGE", "UPLOAD_URL2")
         data = {
                        "image_source_url": user_item.get("weibo_photo"),
                        "image_destination": "WeiboImages/%s" % user_item.get("ref_id"),

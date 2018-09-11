@@ -4,7 +4,7 @@ LOG_TYPE = test
 HOST = localhost
 PORT = 6379
 [KAFKA]
-SERVER = logtest:9092
+SERVER = 52.80.48.239:9092
 [TIME]
 DIFF = 8
 [FILTER_REDIS]
@@ -12,10 +12,11 @@ HOST = localhost
 PORT = 6379
 DB = 0
 [ELASTICSEARCH]
-URL = 52.80.17.255:9200
+URL = estest:9200
 [IMAGE]
 PREFIX = https://dw-temp.s3.cn-north-1.amazonaws.com.cn/
-UPLOAD_URL = http://54.222.222.42:6001/basic/downloadByUrlTiny
+UPLOAD_URL = http://imagefs:6001/basic/downloadByUrlTiny
+UPLOAD_URL2 = http://imagefs:6001/basic/downloadByUrl
 [TAG]
 URL = http://master:5301/basic/tagging
 [TRANSLATE]
