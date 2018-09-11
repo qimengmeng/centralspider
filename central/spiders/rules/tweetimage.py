@@ -75,6 +75,7 @@ class TweetimageRule(object):
         images_info = []
 
         for image_dic in tweet_image_dics:
+
             data = {
                 "image_source_url": image_dic.get("image"),
                 "image_destination": "WeiboImages/%s" % self.doc.get("publish_account").get("account_id"),

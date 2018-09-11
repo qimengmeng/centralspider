@@ -46,6 +46,10 @@ class TweetimageSpider(Spider):
                               scroll='5m')
 
         for doc in result:
+            # 布隆过滤去重
+            if self.download_filter.check_and_update(doc['_source']['url']):
+                logging.debug('tweet image filted')
+                continue
             doc.update(
                         spider=self
                     )
