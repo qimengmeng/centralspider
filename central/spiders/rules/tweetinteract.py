@@ -30,7 +30,7 @@ class TweetinteractRule(object):
 
     def err_report(self, failure):
         # log all failures
-        self.logger.error(repr(failure))
+        self.spider.logger.error(repr(failure))
 
         # in case you want to do something special for some errors,
         # you may need the failure's type:
