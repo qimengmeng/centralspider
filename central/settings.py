@@ -40,7 +40,7 @@ EXTENSIONS = {
     'scrapy.telnet.TelnetConsole': None,
     'central.extensions.baseconfig.Baseconfig': 499,
     'central.extensions.bloomfilter.Crawlfilter': 500,
-    'central.extensions.mq.Kafkaqueue': 501,
+    # 'central.extensions.mq.Kafkaqueue': 501,
     'central.extensions.logger.MSLogger': 502,
     'central.extensions.db.Db': 503,
     'central.extensions.es.ESearch': 504,
