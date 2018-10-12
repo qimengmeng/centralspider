@@ -43,7 +43,6 @@ class WeiboTweetRule(object):
                                                    self.account.ref_id)
 
 
-
     def err_report(self, failure):
         # log all failures
         self.spider.logger.error(repr(failure))

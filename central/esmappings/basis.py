@@ -60,7 +60,7 @@ class TweetType(DocType):
     s3_images = Keyword()
     tiny_images = Keyword()
     thumb_images = Keyword()
-    tags = Text(analyzer="ik_max_word")
+    tags = Keyword()
     created_at = Date()
     publish_account = Nested(properties={
                                         "weibo_name": Keyword(),

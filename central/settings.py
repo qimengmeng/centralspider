@@ -29,7 +29,7 @@ DOWNLOADER_MIDDLEWARES = {
     "scrapy.downloadermiddlewares.useragent.UserAgentMiddleware": None,
     "central.middlewares.download.user_agent.RandomUserAgentMiddleware": 543,
     "central.middlewares.download.cookies.RandomCookieMiddleware": 544,
-    "central.middlewares.download.proixes.ProxyMiddleware": 545,
+    # "central.middlewares.download.proixes.ProxyMiddleware": 545,
 }
 
 SPIDER_MIDDLEWARES = {

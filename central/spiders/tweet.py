@@ -37,7 +37,7 @@ class TweetSpider(Spider):
                                                                         )
 
                                                                         ).all()
-                # weibo_accounts = weibo_accounts[:20]
+                # weibo_accounts = weibo_accounts[:1]
                 for weibo_account in weibo_accounts:
                     task.update(
                         account=weibo_account,
