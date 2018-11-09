@@ -4,14 +4,15 @@ import datetime
 import logging
 import json
 import sys
+import os
+import hashlib
 
 reload(sys)
 sys.setdefaultencoding('utf8')
 
-import requests
 from bs4 import BeautifulSoup
 from scrapy import (
-    Request, FormRequest
+    Request
 )
 
 from central.items.crawlmanage import (
@@ -202,6 +203,13 @@ class WeiboAccountRule(object):
         }
         return SMAccountItem(**user_dic)
 
+    def put_aws(self, data):
+        message = json.dumps(data).encode('utf-8')
+        command = "aws kinesis put-record --stream-name %s --data '%s' --partition-key %s --region %s" \
+                  % ("ImagesInternal", message, "partitionKey1", "cn-north-1")
+        os.system(command)
+
+
     def parse(self, response):
 
         user_item = self.crawl_person_infos(response)
@@ -212,27 +220,27 @@ class WeiboAccountRule(object):
             return
 
         config = self.spider.config
-        upload_url = config.get("IMAGE", "UPLOAD_URL2")
-        data = {
-                       "image_source_url": user_item.get("weibo_photo"),
-                       "image_destination": "WeiboImages/%s" % user_item.get("ref_id"),
-                       "thumbnail": "true",
-                       "blur": "false",
-                   }
+        hash_value = hashlib.md5(user_item.get("weibo_photo")).hexdigest()
 
-        rep = requests.post(url=upload_url, data=data).json()
+        params = {
+            "image_source_url": [user_item.get("weibo_photo")],
+            "hash_value": [hash_value],
+            "thumbnail": "0",
+            "tiny": "0",
+            "prefix": config.get("IMAGE", "PREFIXDIR"),
+            "bucket_name": "dw-temp"
+        }
 
-        rep = eval(rep)
-        status_code = rep.get("status")
+        self.put_aws(params)
 
-        if int(status_code) == 200:
-            user_item["weibo_photo"] = rep.get("paths").get("image")
-            user_item["thumb_image"] = rep.get("paths").get("thumbnail")
-            yield user_item
+        image_prifix = "{}{}/{}".format(
+            config.get("IMAGE", "PREFIX"),
+            config.get("IMAGE", "PREFIXDIR"),
+            hash_value
+        )
 
-        else:
-            return
-
+        user_item["weibo_photo"] = "{}.jpg".format(image_prifix)
+        yield user_item
 
 
     def url_for(self, url):

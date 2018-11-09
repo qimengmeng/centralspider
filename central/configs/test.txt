@@ -1,25 +1,21 @@
-[SCRAPY]
-LOG_TYPE = test
 [PID_REDIS]
 HOST = localhost
 PORT = 6379
-[KAFKA]
-SERVER = 52.80.48.239:9092
-[TIME]
-DIFF = 8
 [FILTER_REDIS]
 HOST = localhost
 PORT = 6379
 DB = 0
-[ELASTICSEARCH]
-URL = estest:9200
 [IMAGE]
-PREFIX = https://dw-temp.s3.cn-north-1.amazonaws.com.cn/
-UPLOAD_URL = http://imagefs:6001/basic/downloadByUrlTiny
-UPLOAD_URL2 = http://imagefs:6001/basic/downloadByUrl
+PREFIX = https://dw-temp.s3.cn-north-1.amazonaws.com.cn
+PREFIXDIR = /weibo
 [TAG]
 URL = http://master:5301/basic/tagging
 [TRANSLATE]
 URL = http://translate_server:1517/niutrans/translation
 [MYSQL]
 SQLALCHEMY_DATABASE_URI = mysql+pymysql://devroot:cgtn2018!@cgtn-qimeng-dev.cqhyewxpye7e.rds.cn-north-1.amazonaws.com.cn:3306/media?charset=utf8mb4
+[ELASTICSEARCH]
+URL = estest:9200
+[KINESIS]
+DATA_STREAM_NAME = Test_Stream
+IMAGE_STREAM_NAME = ImagesInternal

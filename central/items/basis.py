@@ -21,6 +21,7 @@ class TweetItem(Item):
     thumb_images = Field()
     tiny_images = Field()
     tags = Field()
+    images = Field()
 
 
 

@@ -2,12 +2,6 @@ import os
 import logging
 import logging.config as log_conf
 
-log_dir = os.path.dirname(os.path.dirname(__file__))+'/logs'
-if not os.path.exists(log_dir):
-    os.mkdir(log_dir)
-
-log_path = os.path.join(log_dir, 'weibo.log')
-
 log_config = {
     'version': 1.0,
     'formatters': {
@@ -18,6 +12,7 @@ log_config = {
         'simple': {
             'format': '%(name)s - %(levelname)s - %(message)s',
         },
+
     },
     'handlers': {
         'console': {
@@ -25,31 +20,32 @@ log_config = {
             'level': 'INFO',
             'formatter': 'detail'
         },
-        'file': {
-            'class': 'logging.handlers.RotatingFileHandler',
-            'maxBytes': 1024 * 1024 * 5,
-            'backupCount': 10,
-            'filename': log_path,
-            'level': 'INFO',
-            'formatter': 'detail',
-            'encoding': 'utf-8',
-        },
+        'logstash': {
+            'level': 'WARNING',
+            'class': 'logstash.TCPLogstashHandler',
+            'host': 'localhost',
+            'port': 5959,
+            'version': 1,
+            'message_type': 'logstash',
+            'fqdn': False,
+            'tags': []
+        }
     },
     'loggers': {
         'crawler': {
-            'handlers': ['console', 'file'],
+            'handlers': ['console', 'logstash'],
             'level': 'DEBUG',
         },
         'parser': {
-            'handlers': ['file'],
+            'handlers': ['console', 'logstash'],
             'level': 'INFO',
         },
         'other': {
-            'handlers': ['console', 'file'],
+            'handlers': ['console', 'logstash'],
             'level': 'INFO',
         },
         'storage': {
-            'handlers': ['file'],
+            'handlers': ['console', 'logstash'],
             'level': 'INFO',
         }
     }

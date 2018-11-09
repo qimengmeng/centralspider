@@ -10,9 +10,6 @@ sys.setdefaultencoding('utf8')
 import logging
 from bs4 import BeautifulSoup
 from scrapy import Request
-from scrapy.spidermiddlewares.httperror import HttpError
-from twisted.internet.error import DNSLookupError
-from twisted.internet.error import TimeoutError, TCPTimedOutError
 
 
 class TweetinteractRule(object):
@@ -29,24 +26,7 @@ class TweetinteractRule(object):
 
 
     def err_report(self, failure):
-        # log all failures
-        self.spider.logger.error(repr(failure))
-
-        # in case you want to do something special for some errors,
-        # you may need the failure's type:
-        if failure.check(HttpError):
-            # these exceptions come from HttpError spider middleware
-            # you can get the non-200 response
-            response = failure.value.response
-            self.logger.error('HttpError on %s', response.url)
-        elif failure.check(DNSLookupError):
-            # this is the original request
-            request = failure.request
-            self.logger.error('DNSLookupError on %s', request.url)
-
-        elif failure.check(TimeoutError, TCPTimedOutError):
-            request = failure.request
-            self.logger.error('TimeoutError on %s', request.url)
+       pass
 
 
     def start(self):
@@ -66,9 +46,23 @@ class TweetinteractRule(object):
         weibo_info_html = self.get_weibo_infos_right(weibo_html)
         each = BeautifulSoup(weibo_info_html, "lxml")
 
-        retweet_num = each.find(attrs={'node-type': 'forward_btn_text'}).find_all("em")[1].get_text()
-        comment_num = each.find(attrs={'node-type': 'comment_btn_text'}).find_all("em")[1].get_text()
-        up_num = each.find(attrs={'node-type': 'like_status'}).find_all("em")[1].get_text()
+        try:
+            retweet_num = each.find(attrs={'node-type': 'forward_btn_text'}).find_all("em")[1].get_text()
+            retweet_num = int(retweet_num)
+        except:
+            retweet_num = 0
+
+        try:
+            comment_num = each.find(attrs={'node-type': 'comment_btn_text'}).find_all("em")[1].get_text()
+            comment_num = int(comment_num)
+        except:
+            comment_num = 0
+
+        try:
+            up_num = each.find(attrs={'node-type': 'like_status'}).find_all("em")[1].get_text()
+            up_num = int(up_num)
+        except:
+            up_num = 0
 
         res = self.es_client.update(
             index='weibo',
@@ -76,10 +70,12 @@ class TweetinteractRule(object):
             id=self.doc_id,
             body={
                 "doc": {
-                    "up_num": up_num,
-                    "retweet_num": retweet_num,
-                    "comment_num": comment_num
-                    }
+                    "stat": {
+                        "up_num": int(up_num),
+                        "retweet_num": int(retweet_num),
+                        "comment_num": int(comment_num)
+                    },
+                 }
                }
             )
 

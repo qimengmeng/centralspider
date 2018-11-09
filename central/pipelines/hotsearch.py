@@ -7,7 +7,6 @@ import json
 from scrapy.exceptions import (
     DropItem,
 )
-from kafka.errors import KafkaError
 
 from central.items.basis import (
     TweetHotsearchItem,
@@ -60,8 +59,6 @@ class HotsearchPipeline(object):
 
         db_session = spider.db_session
         config = spider.config
-        mslogger = spider.mslogger
-        producer = spider.producer
 
         if not self.is_acceptable(item, spider):
             return item
@@ -76,23 +73,11 @@ class HotsearchPipeline(object):
         params = {
             'url': item_dic.get('link'),
             'hottime': item_dic.get("hottime"),
-
             "keyword": item_dic.get("keyword"),
             "hot_degree": item_dic.get("hot_degree"),
-            "order_number": item_dic.get("order_number"),
-
-            'news_type': item_dic["operation"]['news_type'],
-            'category': item_dic["operation"]['category'],
-            'country':  item_dic["operation"]['country'],
-            'lang':  item_dic["operation"]['lang'],
-
+            "order_number": item_dic.get("order_number")
         }
 
         # 转化为json
         message = json.dumps(params).encode('utf-8')
 
-        try:
-            producer.send('news_streaming', str(message))
-            producer.flush()
-        except KafkaError as e:
-            logging.info(e)

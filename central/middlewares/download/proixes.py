@@ -1,16 +1,11 @@
 # -*- coding: utf-8 -*-
 import base64
 
-
-PROXY_DOMAIN = ['sina']
-
 # 代理服务器
-PROXYSERVER = "http://proxy.abuyun.com:9010"
+PROXYSERVER = "http-dyn.abuyun.com:9020"
 # 代理隧道验证信息
-PROXYUSER = "HR96J33U70UM8QID"
-PROXYPASS = "3AF353FB2568CC67"
-
-
+PROXYUSER = "H41Y61C0Y0BG398D"
+PROXYPASS = "17EB602A0A0D5AB0"
 
 PROXYAUTH = "Basic " + base64.b64encode(PROXYUSER + ":" + PROXYPASS)
 

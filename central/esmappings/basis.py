@@ -20,24 +20,32 @@ ik_analyzer = CustomAnalyzer("ik_max_word", filter=["lowercase"])
 class SocialmediaType(DocType):
     # 微博账户类型
 
-    suggest = Completion(analyzer=ik_analyzer)
-    site = Keyword()
-    account_id = Keyword()
-    account_domain = Keyword()
-    weibo_name = Text(analyzer="ik_max_word")
-    weibo_photo = Keyword()
-    weibo_tweets = Integer()
-    weibo_followers = Integer()
-    weibo_following = Integer()
-    weibo_brief = Text(analyzer="ik_max_word")
-    thumb_image = Keyword()
-    tags = Keyword()
+    # suggest = Completion(analyzer=ik_analyzer)
+    type = Keyword()
+    name = Keyword()
+    # account_domain = Keyword()
+    screen_name = Text(analyzer="ik_max_word")
+    icon = Keyword()
+    tweets = Integer()
+    followers = Integer()
+    following = Integer()
+    brief = Keyword()
+    # thumb_image = Keyword()
+    category = Keyword()
     alpha = Keyword()
+    language = Keyword()
+    country = Nested(
+        properties={
+            "id": Keyword(),
+            "name": Text(analyzer="ik_max_word"),
+        }
+    )
+
 
 
     class Meta:
-        index = "account_weibo"
-        doc_type = "account_weibo"
+        index = "weibo_account"
+        doc_type = "weibo_account"
 
         settings = {
             "number_of_shards": 5,
@@ -48,28 +56,45 @@ class SocialmediaType(DocType):
 class TweetType(DocType):
     #微博类型
 
-    suggest = Completion(analyzer=ik_analyzer)
+    # suggest = Completion(analyzer=ik_analyzer)
     url = Keyword()
     publish_time = Date()
-    publish_source = Keyword()
+    title = Text(analyzer="ik_max_word")
     content = Text(analyzer="ik_max_word")
-    weibo_id = Keyword()
-    up_num = Integer()
-    retweet_num = Integer()
-    comment_num = Integer()
-    s3_images = Keyword()
-    tiny_images = Keyword()
-    thumb_images = Keyword()
-    tags = Keyword()
-    created_at = Date()
-    publish_account = Nested(properties={
-                                        "weibo_name": Keyword(),
-                                        "weibo_photo": Keyword(),
-                                        "account_id": Keyword(),
-                                        "weibo_brief": Keyword()
-                                        }
-
-                                )
+    description = Text(analyzer="ik_max_word")
+    type = Keyword()
+    entry_time = Date()
+    images = Nested(
+                properties={
+                    "origin": Keyword(),
+                    "thumbnail": Keyword(),
+                    "tiny": Keyword()
+                }
+                            )
+    stat = Nested(
+        properties={
+            "up_num": Integer(),
+            "retweet_num": Integer(),
+            "comment_num": Integer()
+        }
+    )
+    tags = Nested(
+        properties={
+            "topic": Keyword(),
+            "super_topic": Keyword(),
+        }
+    )
+    source = Nested(
+        properties={
+             "name": Keyword(),
+             "screen_name": Text(analyzer="ik_max_word"),
+             "icon": Keyword()
+        }
+    )
+    to_cms = Boolean()
+    language = Keyword()
+    translate = Text()
+    # weibo_id = Keyword()
 
     class Meta:
         index = "weibo"

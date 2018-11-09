@@ -29,7 +29,7 @@ DOWNLOADER_MIDDLEWARES = {
     "scrapy.downloadermiddlewares.useragent.UserAgentMiddleware": None,
     "central.middlewares.download.user_agent.RandomUserAgentMiddleware": 543,
     "central.middlewares.download.cookies.RandomCookieMiddleware": 544,
-    # "central.middlewares.download.proixes.ProxyMiddleware": 545,
+    "central.middlewares.download.proixes.ProxyMiddleware": 545,
 }
 
 SPIDER_MIDDLEWARES = {
@@ -41,20 +41,20 @@ EXTENSIONS = {
     'central.extensions.baseconfig.Baseconfig': 499,
     'central.extensions.bloomfilter.Crawlfilter': 500,
     # 'central.extensions.mq.Kafkaqueue': 501,
-    'central.extensions.logger.MSLogger': 502,
     'central.extensions.db.Db': 503,
     'central.extensions.es.ESearch': 504,
     'central.extensions.clproducer.CeleryProducer': 505,
  }
 
 # RETRY
-RETRY_TIMES = 5  # initial response + 5 retries = 6 requests
+RETRY_ENABLED = False
+# RETRY_TIMES = 1   initial response + 5 retries = 6 requests
 # RETRY_HTTP_CODES = [500, 502, 503, 504, 408, 429]
 
 ITEM_PIPELINES = {
       "central.pipelines.socialmedia.SocialmediaPipeline": 601,
       "central.pipelines.tweet.TweetPipeline": 602,
-      "central.pipelines.hotsearch.HotsearchPipeline": 603,
+      # "central.pipelines.hotsearch.HotsearchPipeline": 603,
 }
 
 

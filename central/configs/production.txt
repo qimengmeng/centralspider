@@ -1,0 +1,3 @@
+[KINESIS]
+DATA_STREAM_NAME = Production_Stream
+IMAGE_STREAM_NAME = ImagesInternal

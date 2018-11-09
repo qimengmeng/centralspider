@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+
 from scrapy import Spider
 
 from central.seedconfig import SOCIALMEDIA
@@ -38,3 +39,4 @@ class SocialmediaSpider(Spider):
 
     def make_requests_from_url(self, rule):
         return rule.start()
+

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
+from datetime import datetime
 
-from scrapy import Spider
+from scrapy import Spider, signals
 from sqlalchemy import and_
 
 
@@ -10,6 +11,9 @@ from rules.tweet import (
 from central.seedconfig import TWEET
 from central.models import (
     SocialMedia,
+)
+from central.loggers import (
+    parser
 )
 
 
@@ -23,6 +27,12 @@ class TweetSpider(Spider):
     custom_settings = {
         'COOKIES_ENABLED': True,
     }
+
+    @classmethod
+    def from_crawler(cls, crawler, *args, **kwargs):
+        spider = super(TweetSpider, cls).from_crawler(crawler, *args, **kwargs)
+        crawler.signals.connect(spider.spider_error, signal=signals.spider_error)
+        return spider
 
     def __init__(self, **kw):
         super(TweetSpider, self).__init__(**kw)
@@ -52,3 +62,25 @@ class TweetSpider(Spider):
     def make_requests_from_url(self, rule):
 
         return rule.start()
+
+    def spider_error(self, failure, response, spider):
+
+        message = "Error on {0};微博账号:{1}traceback: {2}".format(
+                        response.url,
+                        response.meta.get("redirect_urls", [""])[0],
+                        failure.getTraceback()
+                    )
+
+        parser.error(
+            message,
+            extra={
+                "detail": {
+                    "website": "weibo",
+                    "type": "parse"
+                },
+                "time": datetime.now().strftime("%Y-%m-%dT%H:%M:%S.000Z"),
+                "subscribers": ["qimengmeng"],
+            }
+
+        )
+

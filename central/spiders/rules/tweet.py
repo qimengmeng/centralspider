@@ -1,17 +1,17 @@
 # -*- coding: utf-8 -*-
 
+import os
 import re
 import sys
-import random
 import json
 from datetime import (
     datetime, timedelta
 )
+import hashlib
 
 reload(sys)
 sys.setdefaultencoding('utf8')
 
-import requests
 import logging
 import lxml
 from lxml import etree
@@ -24,8 +24,11 @@ from twisted.internet.error import DNSLookupError
 from twisted.internet.error import TimeoutError, TCPTimedOutError
 
 from central.items.basis import (
-    TweetItem, TweetImageItem,
+    TweetItem,
 
+)
+from central.loggers import (
+    crawler, parser
 )
 
 class WeiboTweetRule(object):
@@ -37,31 +40,35 @@ class WeiboTweetRule(object):
         self.operation = kwargs.get("operation")
         self.spider = kwargs.get("spider")
 
-        self.mslogger = self.spider.mslogger
-
         self.home_page_url = "https://weibo.com/u/{}?is_ori=1".format(
                                                    self.account.ref_id)
 
+        # self.home_page_url = "http://www.httphttpbinbin.org/"
+
 
     def err_report(self, failure):
-        # log all failures
-        self.spider.logger.error(repr(failure))
 
-        # in case you want to do something special for some errors,
-        # you may need the failure's type:
+        extra = {
+           "detail": {
+               "website": "weibo",
+               "type": "request"
+           },
+           "time": datetime.now().strftime("%Y-%m-%dT%H:%M:%S.000Z"),
+           "subscribers": ["qimengmeng"],
+        }
+
         if failure.check(HttpError):
-            # these exceptions come from HttpError spider middleware
-            # you can get the non-200 response
             response = failure.value.response
-            self.logger.error('HttpError on %s', response.url)
+            crawler.error('HttpError on {}'.format(response.url), extra=extra)
         elif failure.check(DNSLookupError):
-            # this is the original request
             request = failure.request
-            self.logger.error('DNSLookupError on %s', request.url)
+            crawler.error('DNSLookupError on {}'.format(request.url), extra=extra)
 
         elif failure.check(TimeoutError, TCPTimedOutError):
             request = failure.request
-            self.logger.error('TimeoutError on %s', request.url)
+            crawler.error('TimeoutError on {}'.format(request.url), extra=extra)
+        else:
+            crawler.error(repr(failure), extra=extra)
 
 
     def start(self):
@@ -79,6 +86,21 @@ class WeiboTweetRule(object):
         cont = self.get_weibo_infos_right(html)
 
         if not cont:
+            extra = {
+                "detail": {
+                    "website": "weibo",
+                    "type": "parse"
+                },
+                "time": datetime.now().strftime("%Y-%m-%dT%H:%M:%S.000Z"),
+                "subscribers": ["qimengmeng"],
+            }
+            parser.error(
+                '微博账号{}列表页解析失败:{}'.format(
+                     self.account.weibo_name,
+                     response.url
+                ),
+                 extra=extra
+            )
             return
         # 获取所有微博信息列表
         soup = BeautifulSoup(cont, "lxml")
@@ -117,9 +139,23 @@ class WeiboTweetRule(object):
         weibo_info_html = self.get_weibo_infos_right(weibo_html)
         each = BeautifulSoup(weibo_info_html, "lxml")
 
-        retweet_num = each.find(attrs={'node-type': 'forward_btn_text'}).find_all("em")[1].get_text()
-        comment_num = each.find(attrs={'node-type': 'comment_btn_text'}).find_all("em")[1].get_text()
-        up_num = each.find(attrs={'node-type': 'like_status'}).find_all("em")[1].get_text()
+        try:
+            retweet_num = each.find(attrs={'node-type': 'forward_btn_text'}).find_all("em")[1].get_text()
+            retweet_num = int(retweet_num)
+        except:
+            retweet_num = 0
+
+        try:
+            comment_num = each.find(attrs={'node-type': 'comment_btn_text'}).find_all("em")[1].get_text()
+            comment_num = int(comment_num)
+        except:
+            comment_num = 0
+
+        try:
+            up_num = each.find(attrs={'node-type': 'like_status'}).find_all("em")[1].get_text()
+            up_num = int(up_num)
+        except:
+            up_num = 0
 
         try:
             weibo_base_html = each.find(
@@ -128,23 +164,57 @@ class WeiboTweetRule(object):
                 attrs={'node-type': 'feed_list_content'}
             )
         except Exception as e:
-            logging.error(
-                '本次解析微博详情页出错，具体是{},详情页{}'.format(
-                    e, str(each)
-                )
+
+            self.mslogger.put_aws(
+                {
+                    "message": "微博详情解析出错，具体是{},详情页{}".format(
+                                 e, str(each)
+                                    ),
+                    "detail": {
+                        "website": "weibo",
+                        "type": "parse"
+                    },
+                    "time": datetime.now().strftime("%Y-%m-%dT%H:%M:%S.000Z"),
+                    "subscribers": ["qimengmeng"],
+                    "level": "error"
+
+
+                }
             )
+
             return
 
         html = unicode(weibo_base_html)
         content, tags = self.wash_content(html)
 
+        tweet_image_dics = self.get_tweet_image_dic(each)
+        if not tweet_image_dics:
+            images = []
+        else:
+            config = self.spider.config
+            images = map(self._make_object, tweet_image_dics)
+
+            image_source_url = map(lambda obj: obj.get("image"), tweet_image_dics)
+            hash_value = map(lambda obj: hashlib.md5(obj.get("image")).hexdigest(), tweet_image_dics)
+            params = {
+                "image_source_url": image_source_url,
+                "hash_value": hash_value,
+                "thumbnail": "1",
+                "tiny": "1",
+                "prefix": config.get("IMAGE", "PREFIXDIR"),
+                "bucket_name": "dw-temp"
+            }
+
+            self.put_aws(params)
+
         tweet_dic.update(
                 {
-                    "retweet_num": retweet_num,
-                    "comment_num": comment_num,
-                    "up_num": up_num,
+                    "retweet_num": int(retweet_num),
+                    "comment_num": int(comment_num),
+                    "up_num": int(up_num),
                     "content": content,
-                    "tags": tags
+                    "tags": tags,
+                    "images": images
                 }
 
             )
@@ -152,6 +222,29 @@ class WeiboTweetRule(object):
         tweet_item = TweetItem(**tweet_dic)
 
         yield tweet_item
+
+    def put_aws(self, data):
+        message = json.dumps(data).encode('utf-8')
+        command = "aws kinesis put-record --stream-name %s --data '%s' --partition-key %s --region %s" \
+                  % ("ImagesInternal", message, "partitionKey1", "cn-north-1")
+        os.system(command)
+
+    def _make_object(self, image_obj):
+
+        config = self.spider.config
+        hash_value = hashlib.md5(image_obj.get("image")).hexdigest()
+        image_prifix = "{}{}/{}".format(
+                                           config.get("IMAGE", "PREFIX"),
+                                           config.get("IMAGE", "PREFIXDIR"),
+                                            hash_value
+                                           )
+
+        obj = {
+            "origin": "{}.jpg".format(image_prifix),
+            "thumbnail": "{}.thumbnail.jpg".format(image_prifix),
+            "tiny": "{}.tiny.jpg".format(image_prifix)
+        }
+        return obj
 
     def wash_content(self, html):
 
@@ -166,14 +259,17 @@ class WeiboTweetRule(object):
         )
         html = cleaner.clean_html(html)
         page = etree.HTML(html)
-        tags = []
+        tags = {
+            "topic": [],
+            "super_topic": []
+        }
 
         for ele in page.getiterator("a"):
             text = ele.text
             childs = filter(lambda x: x.tag == "i", list(ele))
             supertopic = ele.xpath('./i[@class="W_ficon ficon_supertopic"]')
             if text and u"#" in text:
-                tags.append(text.strip()[:-1])
+                tags["topic"].append(text.strip()[1:-1])
                 for key in ele.attrib.keys():
                     ele.attrib.pop(key)
                 ele.tag = "topic"
@@ -181,7 +277,7 @@ class WeiboTweetRule(object):
             elif text and u"@" in text:
                 pass
             elif supertopic:
-                tags.append(u"*{}".format(childs[0].tail.strip()))
+                tags["super_topic"].append(u"{}".format(childs[0].tail.strip()))
                 for key in ele.attrib.keys():
                     ele.attrib.pop(key)
                 ele.tag = "super"
@@ -223,9 +319,6 @@ class WeiboTweetRule(object):
             weibo_url = 'https://weibo.com{}'.format(weibo_url)
 
         weibo_url = re.search(r'(.*?)\?.*', weibo_url).group(1)
-        s3_images = []
-        thumb_images = []
-        tiny_images = []
 
         tweet_dic = {
 
@@ -235,15 +328,50 @@ class WeiboTweetRule(object):
             "weibo_id": ori_tweet_id,
             "operation": self.operation,
             "account": self.account,
-            "s3_images": s3_images,
-            "thumb_images": thumb_images,
-            "tiny_images": tiny_images
         }
 
         yield Request(
             weibo_url, callback=self.parse_weibo_text, errback=self.err_report,
             meta={'tweet_dic': tweet_dic}
         )
+
+    def get_tweet_image_dic(self, each):
+        weibo_base_html = each.find(
+            attrs={'node-type': 'feed_content'}
+        ).find_all(
+            attrs={'class': 'WB_pic'}
+        )
+
+        # 只取9张
+        weibo_base_html = weibo_base_html[0:9]
+
+        tweet_image_dics = []
+        for num in range(len(weibo_base_html), 0, -1):
+            image_url = weibo_base_html[len(weibo_base_html) - num].find("img").get("src")
+
+            # 替换图片清晰度参数
+            image_url = self.replace_image_pixel(image_url)
+            image_url = self.url_for(image_url)
+            priority = num
+            is_gif = 1 if image_url.endswith('.gif') else 0
+            tweet_image_dic = {
+                'image': image_url,
+                'priority': priority,
+                'is_gif': is_gif,
+            }
+            tweet_image_dics.append(tweet_image_dic)
+        return tweet_image_dics
+
+    def replace_image_pixel(self, image_url):
+        def replace_pixel(m):
+            url = m.group()
+            replace_url = 'sinaimg.cn/mw690/'
+            return replace_url
+
+        regex = 'sinaimg.cn/.*?/'
+        retags = re.compile(regex, re.DOTALL | re.IGNORECASE)
+
+        return retags.sub(replace_pixel, image_url)
 
 
     def url_for(self, url):

@@ -7,10 +7,13 @@ import datetime
 from scrapy.exceptions import (
     DropItem,
 )
-from kafka.errors import KafkaError
+from boto import kinesis
 
 from central.items.basis import (
     TweetItem, TweetImageItem,
+)
+from central.loggers import (
+    storage
 )
 
 
@@ -20,7 +23,7 @@ class TweetPipeline(object):
     accept_spiders = ('central_tweet', )
     accept_items = (TweetItem, TweetImageItem)
     necessary_keys = {
-        'publish', 'content'
+        'url', 'content'
     }
 
     def __init__(self, ):
@@ -60,8 +63,9 @@ class TweetPipeline(object):
 
         db_session = spider.db_session
         config = spider.config
-        mslogger = spider.mslogger
-        producer = spider.producer
+        self.data_stream_name = config.get("KINESIS", "DATA_STREAM_NAME")
+        # mslogger = spider.mslogger
+        # producer = spider.producer
 
         if not self.is_acceptable(item, spider):
             return item
@@ -82,23 +86,28 @@ class TweetPipeline(object):
                 'url': item_dic.get('url'),
                 'publish_time': datetime.datetime.strptime(item_dic.get('publish'), "%Y-%m-%d %H:%M:%S").strftime(
                     "%Y-%m-%dT%H:%M:%S.000Z"),
-                "weibo_id": item_dic.get("weibo_id"),
-                "up_num": item_dic.get("up_num"),
-                "retweet_num": item_dic.get("retweet_num"),
-                "comment_num": item_dic.get("comment_num"),
-                'publish_source': item_dic.get('website'),
-                'publish_account': {
-                                    "weibo_name": account.weibo_name,
-                                    "weibo_photo": account.weibo_photo,
-                                    "account_id": account.ref_id,
-                                    "weibo_brief": account.weibo_brief
-                                    },
-                'content': item_dic.get('content'),
-                "s3_images": item_dic.get("s3_images"),
-                "thumb_images": item_dic.get("thumb_images"),
-                "tiny_images": item_dic.get("tiny_images"),
+                # "weibo_id": item_dic.get("weibo_id"),
+                "stat": {
+                    "up_num": item_dic.get("up_num"),
+                    "retweet_num": item_dic.get("retweet_num"),
+                    "comment_num": item_dic.get("comment_num")
+                    },
+                "type": item_dic.get('website'),
+                "source": {
+                        "screen_name": account.weibo_name,
+                        "icon": account.weibo_photo,
+                        "name": account.ref_id,
+                                },
+                "title": item_dic.get('content'),
                 "tags": item_dic.get("tags"),
-                "created_at": datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%S.000Z")
+                "images": item_dic.get("images"),
+                "entry_time": datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%S.000Z"),
+                "content": "",
+                "description": "",
+                "to_cms": False,
+                "language": "zh",
+                "translate": ""
+
             }
 
         }
@@ -110,10 +119,12 @@ class TweetPipeline(object):
         logging.debug("------")
 
     def put_aws(self, data):
-        os.system(
-            "aws kinesis put-record --stream-name Foo --data '{}' \
-               --partition-key partitionKey1 --region cn-north-1".format(data)
-        )
+        kinesis_client = kinesis.connect_to_region('cn-north-1')
+        kinesis_client.put_record(self.data_stream_name, data=data, partition_key='partitionKey1')
+
+
+
+
 
 
 

@@ -66,8 +66,6 @@ class SocialmediaPipeline(object):
 
         db_session = spider.db_session
         config = spider.config
-        producer = spider.producer
-        mslogger = spider.mslogger
         self.es_client = spider.es_client
 
         if not self.is_acceptable(item, spider):
@@ -107,15 +105,15 @@ class SocialmediaPipeline(object):
 
         socialmedia = item_dic.get('account')
         response = self.es_client.search(
-            index="account_weibo",
-            doc_type="account_weibo",
+            index="weibo_account",
+            doc_type="weibo_account",
             body={
                 "query": {
                     "term": {
-                        "account_id": socialmedia.ref_id,
+                        "name": socialmedia.ref_id,
                         }
                      },
-                "_source": ["account_id"]
+                "_source": ["name"]
                 },
             )
 
@@ -130,23 +128,26 @@ class SocialmediaPipeline(object):
                 alpha = u'其他'
 
             body = {
-                  "site": socialmedia.site,
-                  "account_id": socialmedia.ref_id,
-                  "account_domain": socialmedia.weibo_id,
-                  "weibo_name": socialmedia.weibo_name,
-                  "weibo_photo": socialmedia.weibo_photo,
-                  "weibo_tweets": socialmedia.weibo_tweets,
-                  "weibo_followers": socialmedia.weibo_followers,
-                  "weibo_following": socialmedia.weibo_following,
-                  "weibo_brief": socialmedia.weibo_brief,
-                  "tags": socialmedia.type.split(","),
-                  "thumb_image": item_dic.get("thumb_image"),
-                  "alpha": alpha
+                  "name": socialmedia.ref_id,
+                  "screen_name": socialmedia.weibo_name,
+                  "icon": socialmedia.weibo_photo,
+                  "tweets": socialmedia.weibo_tweets,
+                  "followers": socialmedia.weibo_followers,
+                  "following": socialmedia.weibo_following,
+                  "brief": socialmedia.weibo_brief,
+                  "category": socialmedia.type.split(","),
+                  "alpha": alpha,
+                  "type": socialmedia.site,
+                  "language": "zh",
+                  "country": {
+                      "id": "CHN",
+                      "name": "China"
+                  }
                     }
 
             res = self.es_client.index(
-                        index='account_weibo',
-                        doc_type='account_weibo',
+                        index='weibo_account',
+                        doc_type='weibo_account',
                         body=body,
                         id=None
                     )
@@ -156,14 +157,14 @@ class SocialmediaPipeline(object):
 
             source = sources[0]
             res = self.es_client.update(
-                        index='account_weibo',
-                        doc_type='account_weibo',
+                        index='weibo_account',
+                        doc_type='weibo_account',
                         id=source.get("_id"),
                         body={
                             "doc": {
-                              "weibo_tweets": socialmedia.weibo_tweets,
-                              "weibo_followers": socialmedia.weibo_followers,
-                              "weibo_following": socialmedia.weibo_following,
+                              "tweets": socialmedia.weibo_tweets,
+                              "followers": socialmedia.weibo_followers,
+                              "following": socialmedia.weibo_following
                               }
                           }
                            )

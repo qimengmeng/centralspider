@@ -4,6 +4,7 @@ from basis import (
     SocialmediaType,
     TweetType,
 )
+from log import CrawlerLogType
 
 
 
@@ -13,6 +14,7 @@ from basis import (
 
 
 __all__ = [
-    "SocialmediaType", "TweetType"
+    "SocialmediaType", "TweetType",
+    "CrawlerLogType"
 ]
 
