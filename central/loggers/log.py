@@ -23,7 +23,7 @@ log_config = {
         'logstash': {
             'level': 'WARNING',
             'class': 'logstash.TCPLogstashHandler',
-            'host': 'localhost',
+            'host': '10.1.11.142',
             'port': 5959,
             'version': 1,
             'message_type': 'logstash',
