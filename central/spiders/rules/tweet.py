@@ -27,9 +27,6 @@ from central.items.basis import (
     TweetItem,
 
 )
-from central.loggers import (
-    crawler, parser
-)
 
 class WeiboTweetRule(object):
     """微博动态内容爬虫"""
@@ -39,6 +36,7 @@ class WeiboTweetRule(object):
         self.site = kwargs.get('site')
         self.operation = kwargs.get("operation")
         self.spider = kwargs.get("spider")
+        self.logger = self.spider.logger.logger
 
         self.home_page_url = "https://weibo.com/u/{}?is_ori=1".format(
                                                    self.account.ref_id)
@@ -59,16 +57,16 @@ class WeiboTweetRule(object):
 
         if failure.check(HttpError):
             response = failure.value.response
-            crawler.error('HttpError on {}'.format(response.url), extra=extra)
+            self.logger.error('HttpError on {}'.format(response.url), extra=extra)
         elif failure.check(DNSLookupError):
             request = failure.request
-            crawler.error('DNSLookupError on {}'.format(request.url), extra=extra)
+            self.logger.error('DNSLookupError on {}'.format(request.url), extra=extra)
 
         elif failure.check(TimeoutError, TCPTimedOutError):
             request = failure.request
-            crawler.error('TimeoutError on {}'.format(request.url), extra=extra)
+            self.logger.error('TimeoutError on {}'.format(request.url), extra=extra)
         else:
-            crawler.error(repr(failure), extra=extra)
+            self.logger.error(repr(failure), extra=extra)
 
 
     def start(self):
@@ -82,6 +80,8 @@ class WeiboTweetRule(object):
 
 
     def parse(self, response):
+
+
         html = response.body.decode(response.encoding)
         cont = self.get_weibo_infos_right(html)
 
@@ -94,7 +94,7 @@ class WeiboTweetRule(object):
                 "time": datetime.now().strftime("%Y-%m-%dT%H:%M:%S.000Z"),
                 "subscribers": ["qimengmeng"],
             }
-            parser.error(
+            self.logger.error(
                 '微博账号{}列表页解析失败:{}'.format(
                      self.account.weibo_name,
                      response.url
@@ -165,22 +165,20 @@ class WeiboTweetRule(object):
             )
         except Exception as e:
 
-            self.mslogger.put_aws(
-                {
-                    "message": "微博详情解析出错，具体是{},详情页{}".format(
-                                 e, str(each)
-                                    ),
+            extra = {
                     "detail": {
                         "website": "weibo",
                         "type": "parse"
                     },
                     "time": datetime.now().strftime("%Y-%m-%dT%H:%M:%S.000Z"),
                     "subscribers": ["qimengmeng"],
-                    "level": "error"
-
 
                 }
-            )
+
+            self.logger.error("微博详情解析出错，具体是{},详情页{}".format(
+                                 e, str(each)
+                                    ), extra=extra)
+
 
             return
 

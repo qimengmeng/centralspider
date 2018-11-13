@@ -31,6 +31,7 @@ class WeiboAccountRule(object):
         self.date_time = (datetime.datetime.now() - datetime.timedelta(days=7)).strftime("%Y-%m-%d %H:%M:%S")
 
     def err_report(self, failure):
+
         pass
 
     def start(self):
@@ -211,6 +212,7 @@ class WeiboAccountRule(object):
 
 
     def parse(self, response):
+
 
         user_item = self.crawl_person_infos(response)
         if not user_item:

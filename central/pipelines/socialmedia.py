@@ -32,16 +32,6 @@ class SocialmediaPipeline(object):
     def __init__(self):
         self.count = 0
 
-
-    @classmethod
-    def from_crawler(cls, crawler):
-
-        return cls()
-
-    def open_spider(self, spider):
-        logging.info("running spider:%s", spider.name)
-
-
     def close_spider(self, spider):
         if self.count:
             logging.info(

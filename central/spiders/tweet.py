@@ -12,11 +12,6 @@ from central.seedconfig import TWEET
 from central.models import (
     SocialMedia,
 )
-from central.loggers import (
-    parser
-)
-
-
 
 class TweetSpider(Spider):
     """
@@ -36,6 +31,9 @@ class TweetSpider(Spider):
 
     def __init__(self, **kw):
         super(TweetSpider, self).__init__(**kw)
+        self.add_handler(self.logger.logger)
+        logger = self.logger
+        print logger
 
     def start_requests(self):
         for task in TWEET:
@@ -63,6 +61,17 @@ class TweetSpider(Spider):
 
         return rule.start()
 
+    def add_handler(self, logger):
+
+        # test = logger.logger
+
+        from pythonjsonlogger import jsonlogger
+        from logstash import TCPLogstashHandler
+        logHandler = TCPLogstashHandler('localhost', 5959, version=1)
+        formatter = jsonlogger.JsonFormatter()
+        logHandler.setFormatter(formatter)
+        logger.addHandler(logHandler)
+
     def spider_error(self, failure, response, spider):
 
         message = "Error on {0};微博账号:{1}traceback: {2}".format(
@@ -71,16 +80,20 @@ class TweetSpider(Spider):
                         failure.getTraceback()
                     )
 
-        parser.error(
-            message,
-            extra={
-                "detail": {
-                    "website": "weibo",
-                    "type": "parse"
-                },
-                "time": datetime.now().strftime("%Y-%m-%dT%H:%M:%S.000Z"),
-                "subscribers": ["qimengmeng"],
-            }
+        extra = {
+            "detail": {
+                "website": "weibo",
+                "type": "parse"
+            },
+            "time": datetime.now().strftime("%Y-%m-%dT%H:%M:%S.000Z"),
+            "subscribers": ["qimengmeng"],
+            "spider": self.logger.logger.name
+        }
+
+
+
+        self.logger.logger.error(
+            message, extra=extra
 
         )
 

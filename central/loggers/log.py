@@ -1,6 +1,6 @@
-import os
 import logging
 import logging.config as log_conf
+
 
 log_config = {
     'version': 1.0,
@@ -23,7 +23,7 @@ log_config = {
         'logstash': {
             'level': 'WARNING',
             'class': 'logstash.TCPLogstashHandler',
-            'host': '10.1.11.142',
+            'host': 'localhost',
             'port': 5959,
             'version': 1,
             'message_type': 'logstash',
@@ -57,3 +57,5 @@ crawler = logging.getLogger('crawler')
 parser = logging.getLogger('parser')
 other = logging.getLogger('other')
 storage = logging.getLogger('storage')
+
+

@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import logging
 import json
-import os
 import datetime
 
 from scrapy.exceptions import (
@@ -12,10 +11,6 @@ from boto import kinesis
 from central.items.basis import (
     TweetItem, TweetImageItem,
 )
-from central.loggers import (
-    storage
-)
-
 
 class TweetPipeline(object):
 
@@ -29,15 +24,6 @@ class TweetPipeline(object):
     def __init__(self, ):
         self.count = 0
 
-    @classmethod
-    def from_crawler(cls, crawler):
-        return cls()
-
-    ###########
-    # 爬虫启动
-    def open_spider(self, spider):
-
-        logging.info("running spider:%s", spider.name)
 
     def close_spider(self, spider):
         if self.count:
@@ -64,8 +50,7 @@ class TweetPipeline(object):
         db_session = spider.db_session
         config = spider.config
         self.data_stream_name = config.get("KINESIS", "DATA_STREAM_NAME")
-        # mslogger = spider.mslogger
-        # producer = spider.producer
+
 
         if not self.is_acceptable(item, spider):
             return item
