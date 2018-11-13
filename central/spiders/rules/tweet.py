@@ -81,7 +81,6 @@ class WeiboTweetRule(object):
 
     def parse(self, response):
 
-
         html = response.body.decode(response.encoding)
         cont = self.get_weibo_infos_right(html)
 

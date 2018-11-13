@@ -112,7 +112,7 @@ class SocialmediaPipeline(object):
         sources = response["hits"]["hits"]
 
         if total == 0:
-            alpha = pinyin.get_pinyin(socialmedia.weibo_name, show_tone_marks=True)[0].upper()
+            alpha = pinyin.get_initials(socialmedia.weibo_name)[0]
 
             if alpha not in [unichr(ch) for ch in xrange(0x41, 0x5B)]:
                 alpha = u'其他'

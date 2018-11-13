@@ -31,11 +31,10 @@ class TweetSpider(Spider):
 
     def __init__(self, **kw):
         super(TweetSpider, self).__init__(**kw)
-        self.add_handler(self.logger.logger)
-        logger = self.logger
-        print logger
+        # self.add_handler(self.logger.logger)
 
     def start_requests(self):
+        self.add_handler(self.logger.logger)
         for task in TWEET:
             if task.get('name') == "weibo_tweet":
                 weibo_accounts = self.db_session.query(SocialMedia).filter(
@@ -63,11 +62,10 @@ class TweetSpider(Spider):
 
     def add_handler(self, logger):
 
-        # test = logger.logger
-
         from pythonjsonlogger import jsonlogger
         from logstash import TCPLogstashHandler
-        logHandler = TCPLogstashHandler('localhost', 5959, version=1)
+        host, port = self.config.get('LOGSTASH', 'HOST'), self.config.get('LOGSTASH', 'PORT')
+        logHandler = TCPLogstashHandler(host, int(port), version=1)
         formatter = jsonlogger.JsonFormatter()
         logHandler.setFormatter(formatter)
         logger.addHandler(logHandler)
