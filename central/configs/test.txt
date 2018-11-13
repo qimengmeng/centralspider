@@ -18,4 +18,4 @@ SQLALCHEMY_DATABASE_URI = mysql+pymysql://devroot:cgtnrds2018@cn-cgtn-test-hotsp
 URL = https://vpc-es-cgtn-test1-kjyu3buqk46eihnuugthextznq.cn-north-1.es.amazonaws.com.cn
 [KINESIS]
 DATA_STREAM_NAME = Test_Stream
-IMAGE_STREAM_NAME = ImagesInternal
+IMAGE_STREAM_NAME = weibo_images_stream

@@ -24,4 +24,4 @@ URL = http://translate_server:1517/niutrans/translation
 SQLALCHEMY_DATABASE_URI = mysql+pymysql://devroot:cgtn2018!@cgtn-qimeng-dev.cqhyewxpye7e.rds.cn-north-1.amazonaws.com.cn:3306/media?charset=utf8mb4
 [KINESIS]
 DATA_STREAM_NAME = Develop_Stream
-IMAGE_STREAM_NAME = ImagesInternal
+IMAGE_STREAM_NAME = weibo_images_stream
