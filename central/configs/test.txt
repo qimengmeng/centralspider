@@ -13,7 +13,7 @@ URL = http://master:5301/basic/tagging
 [TRANSLATE]
 URL = http://translate_server:1517/niutrans/translation
 [MYSQL]
-SQLALCHEMY_DATABASE_URI = mysql+pymysql://devroot:cgtn2018!@cgtn-qimeng-dev.cqhyewxpye7e.rds.cn-north-1.amazonaws.com.cn:3306/media?charset=utf8mb4
+SQLALCHEMY_DATABASE_URI = mysql+pymysql://devroot:cgtnrds2018@cn-cgtn-test-hotspot.cqhyewxpye7e.rds.cn-north-1.amazonaws.com.cn:3306/media?charset=utf8mb4
 [ELASTICSEARCH]
 URL = https://vpc-es-cgtn-test1-kjyu3buqk46eihnuugthextznq.cn-north-1.es.amazonaws.com.cn
 [KINESIS]
