@@ -17,6 +17,7 @@ import lxml
 from lxml import etree
 from lxml.html.clean import Cleaner
 import w3lib
+from boto import kinesis
 from bs4 import BeautifulSoup
 from scrapy import Request
 from scrapy.spidermiddlewares.httperror import HttpError
@@ -129,7 +130,6 @@ class WeiboTweetRule(object):
         return cont
 
 
-
     def parse_weibo_text(self, response):
         meta = response.meta
         tweet_dic = meta.get('tweet_dic', '')
@@ -220,12 +220,18 @@ class WeiboTweetRule(object):
 
         yield tweet_item
 
+
     def put_aws(self, data):
+        """
+        数据及日志上传
+        :param data: 数据
+        :param stream_name: 流名称
+        :return:
+        """
         config = self.spider.config
         message = json.dumps(data).encode('utf-8')
-        command = "aws kinesis put-record --stream-name %s --data '%s' --partition-key %s --region %s" \
-                  % (config.get("KINESIS", "IMAGE_STREAM_NAME"), message, "partitionKey1", "cn-north-1")
-        os.system(command)
+        kinesis_client = kinesis.connect_to_region('cn-north-1')
+        kinesis_client.put_record(config.get("KINESIS", "IMAGE_STREAM_NAME"), data=message, partition_key='partitionKey1')
 
     def _make_object(self, image_obj):
 
@@ -290,7 +296,6 @@ class WeiboTweetRule(object):
         content = w3lib.html.remove_tags(content, keep=('topic', 'super')).strip()
 
         return content, tags
-
 
     def get_weibo_info_detail(self, each, html):
 

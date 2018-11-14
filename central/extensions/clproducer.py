@@ -4,7 +4,6 @@ import logging
 import os
 import imp
 
-
 import celery
 from scrapy import signals
 
