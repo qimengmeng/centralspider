@@ -12,6 +12,6 @@ URL = https://vpc-es-cgtn-test1-kjyu3buqk46eihnuugthextznq.cn-north-1.es.amazona
 [KINESIS]
 DATA_STREAM_NAME = Test_Stream
 IMAGE_STREAM_NAME = weibo_images_stream
-[logstah]
+[LOGSTASH]
 HOST = 10.1.11.142
 PORT = 5959

@@ -205,9 +205,10 @@ class WeiboAccountRule(object):
         return SMAccountItem(**user_dic)
 
     def put_aws(self, data):
+        config = self.spider.config
         message = json.dumps(data).encode('utf-8')
         command = "aws kinesis put-record --stream-name %s --data '%s' --partition-key %s --region %s" \
-                  % ("ImagesInternal", message, "partitionKey1", "cn-north-1")
+                  % (config.get("KINESIS", "IMAGE_STREAM_NAME"), message, "partitionKey1", "cn-north-1")
         os.system(command)
 
 
