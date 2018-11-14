@@ -154,7 +154,8 @@ class SocialmediaPipeline(object):
                             "doc": {
                               "tweets": socialmedia.weibo_tweets,
                               "followers": socialmedia.weibo_followers,
-                              "following": socialmedia.weibo_following
+                              "following": socialmedia.weibo_following,
+                               "icon": socialmedia.weibo_photo,
                               }
                           }
                            )
