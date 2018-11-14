@@ -14,10 +14,11 @@ from bs4 import BeautifulSoup
 from scrapy import (
     Request
 )
-
+from boto import kinesis
 from central.items.crawlmanage import (
                     SMAccountItem,
 )
+
 
 class WeiboAccountRule(object):
     """微博动态账号爬虫"""
@@ -204,16 +205,20 @@ class WeiboAccountRule(object):
         }
         return SMAccountItem(**user_dic)
 
+
     def put_aws(self, data):
+        """
+        数据及日志上传
+        :param data: 数据
+        :param stream_name: 流名称
+        :return:
+        """
         config = self.spider.config
         message = json.dumps(data).encode('utf-8')
-        command = "aws kinesis put-record --stream-name %s --data '%s' --partition-key %s --region %s" \
-                  % (config.get("KINESIS", "IMAGE_STREAM_NAME"), message, "partitionKey1", "cn-north-1")
-        os.system(command)
-
+        kinesis_client = kinesis.connect_to_region('cn-north-1')
+        kinesis_client.put_record(config.get("KINESIS", "IMAGE_STREAM_NAME"), data=message, partition_key='partitionKey1')
 
     def parse(self, response):
-
 
         user_item = self.crawl_person_infos(response)
         if not user_item:
@@ -223,26 +228,23 @@ class WeiboAccountRule(object):
             return
 
         config = self.spider.config
-        hash_value = hashlib.md5(user_item.get("weibo_photo")).hexdigest()
 
         params = {
             "image_source_url": [user_item.get("weibo_photo")],
-            "hash_value": [hash_value],
+            "hash_value": [user_item.get("ref_id")],
             "thumbnail": "0",
             "tiny": "0",
-            "prefix": config.get("IMAGE", "PREFIXDIR"),
-            "bucket_name": "dw-temp"
+            "prefix": "/Icons/Weibo",
+            "bucket_name": "news-crawler-test"
         }
 
         self.put_aws(params)
 
-        image_prifix = "{}{}/{}".format(
-            config.get("IMAGE", "PREFIX"),
-            config.get("IMAGE", "PREFIXDIR"),
-            hash_value
+        weibo_photo = "https://news-crawler-test.s3.cn-north-1.amazonaws.com.cn/Icons/Weibo/{}.jpg".format(
+            user_item.get("ref_id")
         )
 
-        user_item["weibo_photo"] = "{}.jpg".format(image_prifix)
+        user_item["weibo_photo"] = weibo_photo
         yield user_item
 
 
