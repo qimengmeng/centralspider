@@ -19,8 +19,6 @@ class TweetinteractRule(object):
         self.spider = kwargs.get("spider")
         self.es_client = self.spider.es_client
 
-        self.mslogger = self.spider.mslogger
-
         self.weibo_detail_url = kwargs['_source']['url']
         self.doc_id = kwargs["_id"]
 
