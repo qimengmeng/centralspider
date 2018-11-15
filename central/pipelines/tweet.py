@@ -86,7 +86,7 @@ class TweetPipeline(object):
                 "title": item_dic.get('content'),
                 "tags": item_dic.get("tags"),
                 "images": item_dic.get("images"),
-                "entry_time": datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%S.000Z"),
+                "entry_time": (datetime.datetime.now() + datetime.timedelta(hours=8)).strftime("%Y-%m-%dT%H:%M:%S.000Z"),
                 "content": "",
                 "description": "",
                 "to_cms": False,
