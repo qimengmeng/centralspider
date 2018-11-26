@@ -155,7 +155,7 @@ class SocialmediaPipeline(object):
                               "tweets": socialmedia.weibo_tweets,
                               "followers": socialmedia.weibo_followers,
                               "following": socialmedia.weibo_following,
-                               "icon": socialmedia.weibo_photo,
+                               # "icon": socialmedia.weibo_photo,
                               }
                           }
                            )

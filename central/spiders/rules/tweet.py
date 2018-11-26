@@ -357,6 +357,8 @@ class WeiboTweetRule(object):
             image_url = self.url_for(image_url)
             priority = num
             is_gif = 1 if image_url.endswith('.gif') else 0
+            if is_gif:
+                continue
             tweet_image_dic = {
                 'image': image_url,
                 'priority': priority,
