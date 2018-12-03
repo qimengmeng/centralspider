@@ -1,3 +1,0 @@
-[KINESIS]
-DATA_STREAM_NAME = Production_Stream
-IMAGE_STREAM_NAME = weibo_images_stream
