@@ -79,7 +79,7 @@ app/static
 
 instance
 models.local
-
+configs
 
 
 __pycache__/
