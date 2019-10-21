@@ -17,7 +17,7 @@ lxml = "==3.7.3"
 celery = "==4.0.2"
 "beautifulsoup4" = "==4.6.3"
 SQLAlchemy = "==1.2.7"
-Twisted = "==16.1.0"
+Twisted = "==19.7.0"
 
 [requires]
 python_version = "2.7"
